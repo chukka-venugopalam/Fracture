@@ -161,7 +161,9 @@ export default function Showcase() {
       }
 
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollRange = window.innerHeight; // 1 viewport height scroll distance
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      const scrollRange = scrollHeight - clientHeight;
       if (scrollRange <= 0) return;
       const progress = Math.max(0, Math.min(1.0, scrollTop / scrollRange));
       setScrollProgress(progress);
@@ -455,77 +457,347 @@ export default function Showcase() {
           SCROLL: {scrollProgress.toFixed(3)}
         </div>
       )}
-      {/* Scroll-triggered content section (Phase 5) */}
+      {/* Phase 6B: 6 Typography Content Overlays */}
       {loaderState === "completed" && (
-        <div 
-          style={{
-            position: "fixed",
-            left: "8%",
-            top: "50%",
-            transform: `translateY(calc(-50% + ${(1.0 - scrollProgress) * 30}px))`,
-            maxWidth: "400px",
-            opacity: Math.max(0, Math.min(1.0, (scrollProgress - 0.25) * 3.5)), // fades in between scrollProgress 0.25 and 0.54
-            transition: "opacity 0.4s ease-out, transform 0.4s ease-out",
-            color: "#f5f5f7",
-            pointerEvents: "none",
-            zIndex: 3,
-            textShadow: "0 2px 10px rgba(0,0,0,0.5)"
-          }}
-        >
-          <span style={{ 
-            fontSize: "0.7rem", 
-            letterSpacing: "0.35em", 
-            color: "#00e5ff", 
-            textTransform: "uppercase",
-            display: "block",
-            marginBottom: "0.6rem",
-            fontWeight: 500
-          }}>
-            STAGE I — THE SHIFT
-          </span>
-          <h1 style={{ 
-            fontFamily: "var(--font-serif)", 
-            fontSize: "2.5rem", 
-            fontWeight: 300, 
-            lineHeight: "1.15",
-            marginBottom: "1.0rem",
-            letterSpacing: "0.02em"
-          }}>
-            Liquid Mercury
-          </h1>
-          <p style={{ 
-            fontSize: "0.85rem", 
-            lineHeight: "1.65", 
-            color: "rgba(255, 255, 255, 0.45)",
-            letterSpacing: "0.04em"
-          }}>
-            Rigid glass edges soften and liquefy. The core resolves into a reflective, mercury-like sphere that ripples under atmospheric pressure, mirroring the pink-blue auroral currents of the void.
-          </p>
-        </div>
+        <>
+          {/* Section 1: Faceted Glass */}
+          <div 
+            style={{
+              position: "fixed",
+              left: "8%",
+              top: "50%",
+              transform: `translateY(calc(-50% - ${scrollProgress * 60}px))`,
+              maxWidth: "400px",
+              opacity: Math.max(0, Math.min(1.0, (0.08 - scrollProgress) * 12.5)), // fades out fully by 0.08
+              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              color: "#f5f5f7",
+              pointerEvents: "none",
+              zIndex: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.5)"
+            }}
+          >
+            <span style={{ 
+              fontSize: "0.7rem", 
+              letterSpacing: "0.35em", 
+              color: "#00e5ff", 
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "0.6rem",
+              fontWeight: 500
+            }}>
+              FACETED GLASS
+            </span>
+            <h1 style={{ 
+              fontFamily: "var(--font-serif)", 
+              fontSize: "2.5rem", 
+              fontWeight: 300, 
+              lineHeight: "1.15",
+              marginBottom: "1.0rem",
+              letterSpacing: "0.02em"
+            }}>
+              Luxury, Editorial, & Jewelry
+            </h1>
+            <p style={{ 
+              fontSize: "0.85rem", 
+              lineHeight: "1.65", 
+              color: "rgba(255, 255, 255, 0.45)",
+              letterSpacing: "0.04em"
+            }}>
+              A delicate, refracting crystalline skin that bounces light across sharp, geometric vertices. Suited to premium editorial layouts and luxury brands.
+            </p>
+          </div>
+
+          {/* Section 2: Liquid Metal */}
+          <div 
+            style={{
+              position: "fixed",
+              left: "8%",
+              top: "50%",
+              transform: `translateY(calc(-50% + ${(0.2 - scrollProgress) * 60}px))`,
+              maxWidth: "400px",
+              opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.13) * 14.2, (0.27 - scrollProgress) * 14.2))), // peaks at 0.20, range 0.13-0.27
+              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              color: "#f5f5f7",
+              pointerEvents: "none",
+              zIndex: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.5)"
+            }}
+          >
+            <span style={{ 
+              fontSize: "0.7rem", 
+              letterSpacing: "0.35em", 
+              color: "#00e5ff", 
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "0.6rem",
+              fontWeight: 500
+            }}>
+              LIQUID METAL
+            </span>
+            <h1 style={{ 
+              fontFamily: "var(--font-serif)", 
+              fontSize: "2.5rem", 
+              fontWeight: 300, 
+              lineHeight: "1.15",
+              marginBottom: "1.0rem",
+              letterSpacing: "0.02em"
+            }}>
+              Tech Launches & Automotive
+            </h1>
+            <p style={{ 
+              fontSize: "0.85rem", 
+              lineHeight: "1.65", 
+              color: "rgba(255, 255, 255, 0.45)",
+              letterSpacing: "0.04em"
+            }}>
+              Organic waves deforming rigid edges. A highly reflective mercury-like surface reflecting the currents of its void. Suited to bold, technical product announcements.
+            </p>
+          </div>
+
+          {/* Section 3: Crystal Growth */}
+          <div 
+            style={{
+              position: "fixed",
+              left: "8%",
+              top: "50%",
+              transform: `translateY(calc(-50% + ${(0.4 - scrollProgress) * 60}px))`,
+              maxWidth: "400px",
+              opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.33) * 14.2, (0.47 - scrollProgress) * 14.2))), // peaks at 0.40, range 0.33-0.47
+              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              color: "#f5f5f7",
+              pointerEvents: "none",
+              zIndex: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.5)"
+            }}
+          >
+            <span style={{ 
+              fontSize: "0.7rem", 
+              letterSpacing: "0.35em", 
+              color: "#00e5ff", 
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "0.6rem",
+              fontWeight: 500
+            }}>
+              CRYSTAL GROWTH
+            </span>
+            <h1 style={{ 
+              fontFamily: "var(--font-serif)", 
+              fontSize: "2.5rem", 
+              fontWeight: 300, 
+              lineHeight: "1.15",
+              marginBottom: "1.0rem",
+              letterSpacing: "0.02em"
+            }}>
+              Beauty, Skincare, & Premium Retail
+            </h1>
+            <p style={{ 
+              fontSize: "0.85rem", 
+              lineHeight: "1.65", 
+              color: "rgba(255, 255, 255, 0.45)",
+              letterSpacing: "0.04em"
+            }}>
+              Sharp prismatic ridges protruding outwards. An iridescent color-shifting quartz structure that glows from within. Suited to boutique retail and cosmetics.
+            </p>
+          </div>
+
+          {/* Section 4: Dark Obsidian */}
+          <div 
+            style={{
+              position: "fixed",
+              left: "8%",
+              top: "50%",
+              transform: `translateY(calc(-50% + ${(0.6 - scrollProgress) * 60}px))`,
+              maxWidth: "400px",
+              opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.53) * 14.2, (0.67 - scrollProgress) * 14.2))), // peaks at 0.60, range 0.53-0.67
+              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              color: "#f5f5f7",
+              pointerEvents: "none",
+              zIndex: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.5)"
+            }}
+          >
+            <span style={{ 
+              fontSize: "0.7rem", 
+              letterSpacing: "0.35em", 
+              color: "#00e5ff", 
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "0.6rem",
+              fontWeight: 500
+            }}>
+              DARK OBSIDIAN
+            </span>
+            <h1 style={{ 
+              fontFamily: "var(--font-serif)", 
+              fontSize: "2.5rem", 
+              fontWeight: 300, 
+              lineHeight: "1.15",
+              marginBottom: "1.0rem",
+              letterSpacing: "0.02em"
+            }}>
+              Music, Entertainment, & Nightlife
+            </h1>
+            <span style={{ 
+              fontSize: "0.80rem",
+              color: "rgba(255, 255, 255, 0.5)",
+              display: "block",
+              marginBottom: "0.8rem",
+              letterSpacing: "0.02em"
+            }}>
+              — suited to music, entertainment, and nightlife brands.
+            </span>
+            <p style={{ 
+              fontSize: "0.85rem", 
+              lineHeight: "1.65", 
+              color: "rgba(255, 255, 255, 0.45)",
+              letterSpacing: "0.04em"
+            }}>
+              A deep, glossy obsidian shell reflecting sharp, high-contrast rim highlights. Suited to immersive nightlife and music platforms.
+            </p>
+          </div>
+
+          {/* Section 5: Pure Light */}
+          <div 
+            style={{
+              position: "fixed",
+              left: "8%",
+              top: "50%",
+              transform: `translateY(calc(-50% + ${(0.8 - scrollProgress) * 60}px))`,
+              maxWidth: "400px",
+              opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.73) * 14.2, (0.87 - scrollProgress) * 14.2))), // peaks at 0.80, range 0.73-0.87
+              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              color: "#f5f5f7",
+              pointerEvents: "none",
+              zIndex: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.5)"
+            }}
+          >
+            <span style={{ 
+              fontSize: "0.7rem", 
+              letterSpacing: "0.35em", 
+              color: "#00e5ff", 
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "0.6rem",
+              fontWeight: 500
+            }}>
+              PURE LIGHT
+            </span>
+            <h1 style={{ 
+              fontFamily: "var(--font-serif)", 
+              fontSize: "2.5rem", 
+              fontWeight: 300, 
+              lineHeight: "1.15",
+              marginBottom: "1.0rem",
+              letterSpacing: "0.02em"
+            }}>
+              Wellness, Meditation, & Spiritual
+            </h1>
+            <span style={{ 
+              fontSize: "0.80rem",
+              color: "rgba(255, 255, 255, 0.5)",
+              display: "block",
+              marginBottom: "0.8rem",
+              letterSpacing: "0.02em"
+            }}>
+              — suited to wellness, meditation, and spiritual brands.
+            </span>
+            <p style={{ 
+              fontSize: "0.85rem", 
+              lineHeight: "1.65", 
+              color: "rgba(255, 255, 255, 0.45)",
+              letterSpacing: "0.04em"
+            }}>
+              A luminous, pulsing, semi-transparent plasma structure at peak brightness. Suited to high-end wellness and spiritual platforms.
+            </p>
+          </div>
+
+          {/* Section 6: Closing Statement */}
+          <div 
+            style={{
+              position: "fixed",
+              left: "8%",
+              top: "50%",
+              transform: `translateY(calc(-50% + ${(1.0 - scrollProgress) * 60}px))`,
+              maxWidth: "500px",
+              opacity: Math.max(0, Math.min(1.0, (scrollProgress - 0.93) * 14.2)), // fades in starting at 0.93
+              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              color: "#f5f5f7",
+              pointerEvents: "none",
+              zIndex: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.5)"
+            }}
+          >
+            <h1 style={{ 
+              fontFamily: "var(--font-serif)", 
+              fontSize: "3.2rem", 
+              fontWeight: 300, 
+              lineHeight: "1.1",
+              marginBottom: "1.2rem",
+              letterSpacing: "0.02em"
+            }}>
+              One object.<br />Five surfaces.
+            </h1>
+            <p style={{ 
+              fontSize: "1.15rem", 
+              lineHeight: "1.65", 
+              color: "#00e5ff",
+              letterSpacing: "0.06em",
+              fontWeight: 300
+            }}>
+              Built to show what's possible.
+            </p>
+          </div>
+        </>
       )}
       {loaderState === "completed" && (
         <div 
           className="scroll-spacer" 
-          style={{ height: "200vh", pointerEvents: "none" }} 
+          style={{ height: "500vh", pointerEvents: "none" }} 
         />
       )}
     </>
   );
 }
 
-// Phase 5 Scroll-Driven Camera Choreography Rig
+// Phase 6B Scroll-Driven Camera Choreography Rig
 function CameraRig({ scrollProgress }: { scrollProgress: number }) {
   const targetPos = useRef(new THREE.Vector3(0, 0, 5));
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
 
-    // Camera starts at [0, 0, 5] (front view of glass)
-    // Orbits to [2.2, 0.8, 3.8] (side/top view looking down on liquid metal core)
-    const startPos = new THREE.Vector3(0, 0, 5);
-    const endPos = new THREE.Vector3(2.2, 0.8, 3.8);
+    // Camera orbit coordinates:
+    // State 0 (Glass): [0.0, 0.0, 5.0]
+    // State 1 (Liquid Metal): [2.2, 0.8, 3.8]
+    // State 2 (Crystal Growth): [-2.0, -1.0, 4.0]
+    // State 3 (Dark Obsidian): [0.0, 2.5, 4.0]
+    // State 4 (Pure Light): [0.0, 0.0, 3.2]
+    // Closing: [0.0, 0.0, 5.5]
+    const p0 = new THREE.Vector3(0.0, 0.0, 5.0);
+    const p1 = new THREE.Vector3(2.2, 0.8, 3.8);
+    const p2 = new THREE.Vector3(-2.0, -1.0, 4.0);
+    const p3 = new THREE.Vector3(0.0, 2.5, 4.0);
+    const p4 = new THREE.Vector3(0.0, 0.0, 3.2);
+    const p5 = new THREE.Vector3(0.0, 0.0, 5.5);
 
-    targetPos.current.lerpVectors(startPos, endPos, scrollProgress);
+    if (scrollProgress <= 0.2) {
+      const factor = scrollProgress / 0.2;
+      targetPos.current.lerpVectors(p0, p1, factor);
+    } else if (scrollProgress <= 0.4) {
+      const factor = (scrollProgress - 0.2) / 0.2;
+      targetPos.current.lerpVectors(p1, p2, factor);
+    } else if (scrollProgress <= 0.6) {
+      const factor = (scrollProgress - 0.4) / 0.2;
+      targetPos.current.lerpVectors(p2, p3, factor);
+    } else if (scrollProgress <= 0.8) {
+      const factor = (scrollProgress - 0.6) / 0.2;
+      targetPos.current.lerpVectors(p3, p4, factor);
+    } else {
+      const factor = (scrollProgress - 0.8) / 0.2;
+      targetPos.current.lerpVectors(p4, p5, factor);
+    }
 
     // Smoothly interpolate the camera position
     state.camera.position.lerp(targetPos.current, 5.0 * dt);

@@ -1,0 +1,95 @@
+{
+   "checksum": "e846e73647617aaf5c6fbb934faeaf31",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "date_added": "13428940028801320",
+            "date_last_used": "0",
+            "guid": "83e6b6a0-e5c5-47b8-ac59-00b17ab58e66",
+            "id": "10",
+            "name": "Adobe Acrobat Pro DC for Samsung",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "http://www.adobe.com/go/samsung_apdc",
+            "visit_count": 0
+         }, {
+            "date_added": "13428940028800499",
+            "date_last_used": "0",
+            "guid": "99c1c4c0-2dd6-4d71-be59-c04cca216f66",
+            "id": "9",
+            "name": "Adobe Creative Cloud All Apps for Samsung",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "http://www.adobe.com/go/samsung_cci",
+            "visit_count": 0
+         }, {
+            "date_added": "13428940028799539",
+            "date_last_used": "0",
+            "guid": "cf468abf-6a18-4361-aaa7-ed92a2cdf0e5",
+            "id": "8",
+            "name": "Adobe Premiere Pro CC for Samsung",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "http://www.adobe.com/go/samsung_ppcc",
+            "visit_count": 0
+         }, {
+            "date_added": "13428940028798296",
+            "date_last_used": "0",
+            "guid": "b467c2d4-41ed-4553-99b7-3dfc790d00e9",
+            "id": "7",
+            "name": "McAfee Online Protection – Benefits for Samsung PCs",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "https://consroute.mcafee.com/app?csrc=browserfav&affid=1348&clicksrc=browserfav",
+            "visit_count": 0
+         } ],
+         "date_added": "13428940028620418",
+         "date_last_used": "0",
+         "date_modified": "13428940028801320",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Favorites bar",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13428940028620418",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Other favorites",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13428940028620418",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile favorites",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "workspaces_v2": {
+         "children": [  ],
+         "date_added": "13428940028620418",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "75aa6670-344f-549d-b742-660f029506ab",
+         "id": "5",
+         "name": "Workspaces",
+         "source": "unknown",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CjEKDgiIgQISCNVNtXifAQAAEgAqGGdpZUl1YnVURVFSQll2WFI2NTh4Wmc9PUgDoAYHEo4BCAMSiQEKHG5qZ0R1ODhlQ3J2WHA4NnBEN2ZIR2NxRnA4OD0SJGM3MzRkYTdlLTA1OTEtNTBmNC05OWVjLWU3MTI2Y2M2ODhmZhgAIAAoADDE0uyX4DM4h+Xsl+AzQIfl7JfgM0oceXpOQjAxY241NEE3Y1JVMHVUKy9QZ21UdFVvPVoAZQAAAADCPgJgABKOAQgBEokBChx5eEovNmZ2a2VjcjdrcDVFUXpCNHRXTHBkYkU9EiRmZDNkMGU1Mi1jZDY1LTU5NWUtODdhOS05ZDMyMmRlNDkyNmMYACAAKAAwvdLsl+AzONff7JfgM0DX3+yX4DNKHGFSQ1dMZ2hGOWI1SW5xS0lEdnVKL2p2UWtGYz1aAGUAAAAAwj4CYAASjgEIAhKJAQocWWNTVG9udkVTUHdxQ3M0TDJjclZodjY4TDk4PRIkZjcxNjdiYWItOTc4NC01ZWUwLTk1MzktOTQzMTk4NzVhNmU0GAAgACgAML7S7JfgMzjg4OyX4DNA4ODsl+AzShxvUFZraHdCUmJWNjVLQ1dSMitJT05IV29PdTg9WgBlAAAAAMI+AmAAEo4BCAUSiQEKHHdSQnJaTCs2UEE5YXZLZ2pOUDdKWERMY2Z2cz0SJGMyMjQxY2Y0LTMzODItNWMzOS1hNWJkLTRmMGQ0MzcyYWJmMBgAIAAoADDD0uyX4DM42OPsl+AzQNjj7JfgM0ocbm14NjVzUUR2eEk4VGdFZXYrQStudHRvU240PVoAZQAAAADCPgJgADAAOAA=",
+   "version": 1
+}

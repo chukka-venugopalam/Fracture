@@ -4,7 +4,8 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-// Custom GLSL shaders for the crystal core supporting glass-to-metal transition
+// Custom GLSL shaders for the crystal core supporting 3-state transitions
+// Custom GLSL shaders for the crystal core supporting 5-state transitions
 const coreVertexShader = `
   uniform float uTime;
   uniform float uTransition;
@@ -15,9 +16,30 @@ const coreVertexShader = `
   void main() {
     vNormal = normalize(normalMatrix * normal);
     
-    // Displace vertices along normals for liquid metal ripples
+    // Displace vertices along normals for liquid metal, crystal growth, and pure light states
     vec3 pos = position;
-    if (uTransition > 0.0) {
+    if (uTransition > 3.0) {
+      // Pure Light pulsing plasma displacement
+      float transitionFactor = uTransition - 3.0;
+      float pulse = sin(uTime * 3.5 + position.x * 3.0 + position.y * 3.0) * 0.05 * transitionFactor;
+      pos += normal * pulse;
+    } else if (uTransition > 2.0) {
+      // Flattening spiky crystal displacement
+      float transitionFactor = uTransition - 2.0;
+      float spikyDisplacement = pow(abs(sin(position.x * 12.0) * cos(position.y * 12.0)), 2.0) * 0.12;
+      float displacement = mix(spikyDisplacement, 0.0, transitionFactor);
+      pos += normal * displacement;
+    } else if (uTransition > 1.0) {
+      float transitionFactor = uTransition - 1.0;
+      float wave = sin(position.x * 4.5 + position.y * 4.5 + uTime * 2.8) * cos(position.z * 4.5 + uTime * 2.2);
+      float rippleDisplacement = wave * 0.065;
+      
+      // Spiky crystal displacement
+      float spikyDisplacement = pow(abs(sin(position.x * 12.0) * cos(position.y * 12.0)), 2.0) * 0.12;
+      
+      float displacement = mix(rippleDisplacement, spikyDisplacement, transitionFactor);
+      pos += normal * displacement;
+    } else if (uTransition > 0.0) {
       float wave = sin(position.x * 4.5 + position.y * 4.5 + uTime * 2.8) * cos(position.z * 4.5 + uTime * 2.2);
       float displacement = wave * 0.065 * uTransition;
       pos += normal * displacement;
@@ -41,14 +63,20 @@ const coreFragmentShader = `
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(vViewPosition);
 
-    // Dynamic normal ripples for liquid metal surface
+    // Dynamic normal ripples for liquid metal surface (fades out in state 2, remains 0 in 3 and 4)
     if (uTransition > 0.0) {
       vec3 perturb = vec3(
         sin(vWorldPosition.y * 10.0 + uTime * 3.5) * 0.12,
         cos(vWorldPosition.z * 10.0 + uTime * 3.5) * 0.12,
         sin(vWorldPosition.x * 10.0 + uTime * 3.5) * 0.12
       );
-      normal = normalize(normal + perturb * uTransition);
+      float scale = 0.0;
+      if (uTransition <= 1.0) {
+        scale = uTransition;
+      } else if (uTransition <= 2.0) {
+        scale = 2.0 - uTransition;
+      }
+      normal = normalize(normal + perturb * scale);
     }
 
     // Base colors (pink-to-blue gradient identity)
@@ -91,9 +119,54 @@ const coreFragmentShader = `
     
     vec3 finalMetalColor = liquidMetalColor + specularMetal + metalEdgeGlow;
 
+    // CRYSTAL GROWTH STATE SHADING (uTransition = 2.0)
+    float crystalFresnel = pow(1.0 - cosTheta, 3.0);
+    vec3 crystalCaustic = mix(pinkWhite * 1.5, coolBlue * 1.7, sin(dot(normal, viewDir) * 6.28) * 0.5 + 0.5);
+    vec3 crystalColor = baseGlassColor * (crystalCaustic * 0.8 + 0.2) + specularFlash * 0.5;
+    
+    // Glowing internal quartz veins (color-shifting rose/cyan)
+    vec3 emissiveQuartzGlow = mix(vec3(1.0, 0.3, 0.75), vec3(0.0, 0.95, 1.0), sin(vWorldPosition.y * 8.0 + uTime * 1.5) * 0.5 + 0.5) * 0.45;
+    float crystalSpecPower = pow(max(dot(normal, halfVec), 0.0), 50.0) * 4.0;
+    vec3 specularCrystal = vec3(1.0, 0.85, 0.95) * crystalSpecPower;
+    
+    vec3 finalCrystalColor = mix(crystalColor, emissiveQuartzGlow, 0.38) + specularCrystal * 1.2;
+
+    // DARK OBSIDIAN STATE SHADING (uTransition = 3.0)
+    vec3 obsidianColor = vec3(0.02, 0.02, 0.03);
+    float obsidianFresnel = pow(1.0 - cosTheta, 4.0);
+    vec3 obsidianEdgeGlow = mix(pinkWhite * 1.5, coolBlue * 1.8, sin(uTime + normal.y * 2.0) * 0.5 + 0.5) * obsidianFresnel;
+    vec3 obsidianVeins = mix(pinkWhite, coolBlue, sin(vWorldPosition.y * 6.0 + uTime * 1.0) * 0.5 + 0.5) * 0.08;
+    vec3 finalObsidianColor = obsidianColor + obsidianEdgeGlow + obsidianVeins + specularFlash * 0.4;
+    float obsidianOpacity = 0.98;
+
+    // PURE LIGHT STATE SHADING (uTransition = 4.0)
+    vec3 pureLightBase = mix(pinkWhite, coolBlue, sin(uTime * 0.5) * 0.5 + 0.5);
+    vec3 pureLightColor = mix(pureLightBase * 1.5, vec3(1.0, 1.0, 1.0), 0.7);
+    float centerBrightness = pow(cosTheta, 2.0) * 2.2;
+    vec3 finalPureLightColor = pureLightColor * (centerBrightness + 0.5) + specularFlash * 1.5;
+    float pureLightOpacity = mix(0.25, 0.65, cosTheta);
+
     // INTERPOLATE MATERIAL STATES
-    vec3 finalColor = mix(finalGlassColor, finalMetalColor, uTransition);
-    float finalOpacity = mix(0.96, 1.0, uTransition);
+    vec3 finalColor = vec3(0.0);
+    float finalOpacity = 1.0;
+    
+    if (uTransition <= 1.0) {
+      finalColor = mix(finalGlassColor, finalMetalColor, uTransition);
+      finalOpacity = mix(0.96, 1.0, uTransition);
+    } else if (uTransition <= 2.0) {
+      float transitionFactor = uTransition - 1.0;
+      finalColor = mix(finalMetalColor, finalCrystalColor, transitionFactor);
+      finalOpacity = mix(1.0, 0.82, transitionFactor);
+    } else if (uTransition <= 3.0) {
+      float transitionFactor = uTransition - 2.0;
+      finalColor = mix(finalCrystalColor, finalObsidianColor, transitionFactor);
+      finalOpacity = mix(0.82, 0.98, transitionFactor);
+    } else {
+      float transitionFactor = clamp(uTransition - 3.0, 0.0, 1.0);
+      finalColor = mix(finalObsidianColor, finalPureLightColor, transitionFactor);
+      float targetLightOpacity = pureLightOpacity;
+      finalOpacity = mix(0.98, targetLightOpacity, transitionFactor);
+    }
 
     gl_FragColor = vec4(finalColor, finalOpacity);
   }
@@ -219,7 +292,19 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
       
       // Interpolate transition progress smoothly
       const currentTransition = coreMaterial.uniforms.uTransition.value;
-      coreMaterial.uniforms.uTransition.value += (scrollProgress - currentTransition) * 5.0 * dt;
+      let targetTransition = 0.0;
+      if (scrollProgress <= 0.2) {
+        targetTransition = (scrollProgress / 0.2) * 1.0;
+      } else if (scrollProgress <= 0.4) {
+        targetTransition = 1.0 + ((scrollProgress - 0.2) / 0.2) * 1.0;
+      } else if (scrollProgress <= 0.6) {
+        targetTransition = 2.0 + ((scrollProgress - 0.4) / 0.2) * 1.0;
+      } else if (scrollProgress <= 0.8) {
+        targetTransition = 3.0 + ((scrollProgress - 0.6) / 0.2) * 1.0;
+      } else {
+        targetTransition = 4.0;
+      }
+      coreMaterial.uniforms.uTransition.value += (targetTransition - currentTransition) * 5.0 * dt;
     }
 
     // 1. Interpolate rotations
