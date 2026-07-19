@@ -1,0 +1,21 @@
+[16988:1344:0719/092002.158:WARNING:chrome\browser\extensions\activity_log\activity_log_policy.cc:71] Scheduling init
+[16988:1344:0719/092002.159:WARNING:chrome\browser\extensions\activity_log\activity_log_policy.cc:71] Scheduling init
+[14320:19088:0719/092002.218:ERROR:ui\gl\direct_composition_support.cc:247] GetGpuDriverOverlayInfo: Failed to retrieve video device
+[14320:19088:0719/092002.219:VERBOSE1:components\viz\service\main\viz_main_impl.cc:87] VizNullHypothesis is disabled (not a warning)
+[20840:12008:0719/092002.281:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 12
+[20684:20784:0719/092002.316:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 12
+[16988:1344:0719/092002.318:WARNING:components\signin\internal\identity_manager\account_fetcher_service.cc:231] Edge does not support fetching account capabilities
+[16988:1344:0719/092002.318:WARNING:components\signin\internal\identity_manager\account_fetcher_service.cc:192] Should not execute: Tests depending on this function may fail
+[16988:1344:0719/092002.325:WARNING:chrome\browser\extensions\external_registry_loader_win.cc:283] Error observing HKLM: 5
+[16988:5760:0719/092002.392:INFO:chrome\common\importer\edge_chrome_importer_utils_win.cc:34] Google chrome user data path not found.
+[20116:8052:0719/092002.408:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 12
+[17648:18348:0719/092002.420:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 12
+[16988:1344:0719/092002.489:INFO:CONSOLE:4598] "[ProtocolLaunch] handler constructed; wiring port events.", source: chrome-extension://ndcpkimcihhghdcddljkfmmjccdmcmof/background.rollup.js (4598)
+[16988:1344:0719/092002.895:WARNING:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:238] Cache isn't initialized
+[16988:1344:0719/092002.982:INFO:CONSOLE:2478] "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold", source: http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js (2478)
+[16988:1344:0719/092003.015:INFO:CONSOLE:2478] "[HMR] connected", source: http://localhost:3000/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js (2478)
+[16988:1344:0719/092003.042:WARNING:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:238] Cache isn't initialized
+[16988:1344:0719/092003.066:WARNING:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:238] Cache isn't initialized
+[16988:1344:0719/092003.067:WARNING:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:238] Cache isn't initialized
+[16988:1344:0719/092003.070:WARNING:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:238] Cache isn't initialized
+[16988:1344:0719/092003.096:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.

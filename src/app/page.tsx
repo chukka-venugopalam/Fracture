@@ -1,7 +1,10 @@
+import Showcase from "@/components/Showcase";
+
 export default function Home() {
   return (
     <main>
-      <div>Hello world!</div>
+      <Showcase />
     </main>
   );
 }
+
