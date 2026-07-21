@@ -4,11 +4,11 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-// Custom GLSL shaders for the crystal core supporting 3-state transitions
-// Custom GLSL shaders for the crystal core supporting 5-state transitions
 const coreVertexShader = `
   uniform float uTime;
   uniform float uTransition;
+  uniform float uReducedMotion;
+  uniform float uMobileMode;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   varying vec3 vWorldPosition;
@@ -16,18 +16,20 @@ const coreVertexShader = `
   void main() {
     vNormal = normalize(normalMatrix * normal);
     
+    float motionScale = 1.0 - uReducedMotion * 0.75;
+    
     // Displace vertices along normals for liquid metal, crystal growth, and pure light states
     vec3 pos = position;
     if (uTransition > 3.0) {
       // Pure Light pulsing plasma displacement
       float transitionFactor = uTransition - 3.0;
-      float pulse = sin(uTime * 3.5 + position.x * 3.0 + position.y * 3.0) * 0.05 * transitionFactor;
+      float pulse = sin(uTime * 3.5 + position.x * 3.0 + position.y * 3.0) * 0.05 * transitionFactor * motionScale;
       pos += normal * pulse;
     } else if (uTransition > 2.0) {
       // Flattening spiky crystal displacement
       float transitionFactor = uTransition - 2.0;
       float spikyDisplacement = pow(abs(sin(position.x * 12.0) * cos(position.y * 12.0)), 2.0) * 0.12;
-      float displacement = mix(spikyDisplacement, 0.0, transitionFactor);
+      float displacement = mix(spikyDisplacement, 0.0, transitionFactor) * motionScale;
       pos += normal * displacement;
     } else if (uTransition > 1.0) {
       float transitionFactor = uTransition - 1.0;
@@ -37,11 +39,11 @@ const coreVertexShader = `
       // Spiky crystal displacement
       float spikyDisplacement = pow(abs(sin(position.x * 12.0) * cos(position.y * 12.0)), 2.0) * 0.12;
       
-      float displacement = mix(rippleDisplacement, spikyDisplacement, transitionFactor);
+      float displacement = mix(rippleDisplacement, spikyDisplacement, transitionFactor) * motionScale;
       pos += normal * displacement;
     } else if (uTransition > 0.0) {
       float wave = sin(position.x * 4.5 + position.y * 4.5 + uTime * 2.8) * cos(position.z * 4.5 + uTime * 2.2);
-      float displacement = wave * 0.065 * uTransition;
+      float displacement = wave * 0.065 * uTransition * motionScale;
       pos += normal * displacement;
     }
 
@@ -55,6 +57,8 @@ const coreVertexShader = `
 const coreFragmentShader = `
   uniform float uTime;
   uniform float uTransition;
+  uniform float uReducedMotion;
+  uniform float uMobileMode;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   varying vec3 vWorldPosition;
@@ -65,10 +69,11 @@ const coreFragmentShader = `
 
     // Dynamic normal ripples for liquid metal surface (fades out in state 2, remains 0 in 3 and 4)
     if (uTransition > 0.0) {
+      float rippleScale = 1.0 - uMobileMode * 0.7;
       vec3 perturb = vec3(
-        sin(vWorldPosition.y * 10.0 + uTime * 3.5) * 0.12,
-        cos(vWorldPosition.z * 10.0 + uTime * 3.5) * 0.12,
-        sin(vWorldPosition.x * 10.0 + uTime * 3.5) * 0.12
+        sin(vWorldPosition.y * 10.0 + uTime * 3.5) * 0.12 * rippleScale,
+        cos(vWorldPosition.z * 10.0 + uTime * 3.5) * 0.12 * rippleScale,
+        sin(vWorldPosition.x * 10.0 + uTime * 3.5) * 0.12 * rippleScale
       );
       float scale = 0.0;
       if (uTransition <= 1.0) {
@@ -176,13 +181,22 @@ interface ShatteredCoreProps {
   gradientTexture: THREE.CanvasTexture | null;
   studyMode?: boolean;
   scrollProgress?: number;
+  reducedMotion?: boolean;
+  mobileMode?: boolean;
 }
 
-export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }: ShatteredCoreProps) {
+export default function ShatteredCore({ 
+  studyMode = false, 
+  scrollProgress = 0,
+  reducedMotion = false,
+  mobileMode = false
+}: ShatteredCoreProps) {
   const visualGroupRef = useRef<THREE.Group>(null);
 
   // Drag physics state variables
   const isDragging = useRef<boolean>(false);
+  const dragDirectionDetermined = useRef<boolean>(false);
+  const dragMode = useRef<"rotate" | "scroll" | null>(null);
   const startX = useRef<number>(0);
   const startY = useRef<number>(0);
   const startRotX = useRef<number>(0);
@@ -196,6 +210,8 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
 
   const velX = useRef<number>(0);
   const velY = useRef<number>(0);
+  const rotVelX = useRef<number>(0);
+  const rotVelY = useRef<number>(0);
   const lastMouseX = useRef<number>(0);
   const lastMouseY = useRef<number>(0);
 
@@ -209,6 +225,8 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
       uniforms: {
         uTime: { value: 0 },
         uTransition: { value: 0 },
+        uReducedMotion: { value: 0 },
+        uMobileMode: { value: 0 },
       },
       transparent: true,
       depthWrite: true,
@@ -222,6 +240,8 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
 
     const handlePointerDown = (e: PointerEvent) => {
       isDragging.current = true;
+      dragDirectionDetermined.current = false;
+      dragMode.current = null;
       startX.current = e.clientX;
       startY.current = e.clientY;
       startRotX.current = targetRotX.current;
@@ -231,10 +251,40 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
       lastDragTime.current = performance.now();
       velX.current = 0;
       velY.current = 0;
+
+      if (typeof document !== "undefined") {
+        document.body.classList.add("cursor-grabbing");
+        document.body.classList.remove("cursor-grab");
+      }
     };
 
     const handlePointerMove = (e: PointerEvent) => {
       if (!isDragging.current) return;
+      if (dragMode.current === "scroll") return;
+
+      if (!dragDirectionDetermined.current) {
+        const dx = Math.abs(e.clientX - startX.current);
+        const dy = Math.abs(e.clientY - startY.current);
+        if (dx + dy > 10) {
+          dragDirectionDetermined.current = true;
+          if (dy > dx * 1.0) {
+            // Committed to vertical page scroll -> cancel rotate dragging
+            dragMode.current = "scroll";
+            isDragging.current = false;
+            if (typeof document !== "undefined") {
+              document.body.classList.remove("cursor-grabbing");
+            }
+            return;
+          } else {
+            // Committed to core rotation -> lock rotate mode
+            dragMode.current = "rotate";
+          }
+        } else {
+          return; // Deadzone: do not move until threshold exceeded
+        }
+      }
+
+      if (dragMode.current !== "rotate") return;
 
       const deltaX = e.clientX - startX.current;
       const deltaY = e.clientY - startY.current;
@@ -260,27 +310,57 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
     };
 
     const handlePointerUp = () => {
-      if (!isDragging.current) return;
+      if (typeof document !== "undefined") {
+        document.body.classList.remove("cursor-grabbing");
+      }
+
+      if (!isDragging.current) {
+        isDragging.current = false;
+        dragMode.current = null;
+        dragDirectionDetermined.current = false;
+        return;
+      }
       isDragging.current = false;
 
-      // Cap momentum velocity to avoid infinite wild spins
-      const maxVel = 8.0;
-      velX.current = Math.max(-maxVel, Math.min(maxVel, velX.current * 0.18));
-      velY.current = Math.max(-maxVel, Math.min(maxVel, velY.current * 0.18));
+      if (dragMode.current === "rotate") {
+        // Cap momentum velocity to avoid infinite wild spins
+        const maxVel = 8.0;
+        velX.current = Math.max(-maxVel, Math.min(maxVel, velX.current * 0.18));
+        velY.current = Math.max(-maxVel, Math.min(maxVel, velY.current * 0.18));
+      }
+
+      dragMode.current = null;
+      dragDirectionDetermined.current = false;
+    };
+
+    // Mobile touch axis isolation: prevent page scrolling ONLY when rotating the core
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDragging.current && dragMode.current === "rotate") {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      }
     };
 
     canvasEl.addEventListener("pointerdown", handlePointerDown);
     canvasEl.addEventListener("pointermove", handlePointerMove);
     canvasEl.addEventListener("pointerup", handlePointerUp);
     canvasEl.addEventListener("pointercancel", handlePointerUp);
+    canvasEl.addEventListener("touchmove", handleTouchMove, { passive: false });
 
     return () => {
       canvasEl.removeEventListener("pointerdown", handlePointerDown);
       canvasEl.removeEventListener("pointermove", handlePointerMove);
       canvasEl.removeEventListener("pointerup", handlePointerUp);
       canvasEl.removeEventListener("pointercancel", handlePointerUp);
+      canvasEl.removeEventListener("touchmove", handleTouchMove);
     };
   }, [gl, size.width, size.height]);
+
+  const reducedMotionRef = useRef(reducedMotion);
+  const mobileModeRef = useRef(mobileMode);
+  reducedMotionRef.current = reducedMotion;
+  mobileModeRef.current = mobileMode;
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
@@ -289,6 +369,8 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
     // Update shader uniforms with organic lerping
     if (coreMaterial) {
       coreMaterial.uniforms.uTime.value = time;
+      coreMaterial.uniforms.uReducedMotion.value = reducedMotionRef.current ? 1.0 : 0.0;
+      coreMaterial.uniforms.uMobileMode.value = mobileModeRef.current ? 1.0 : 0.0;
       
       // Interpolate transition progress smoothly
       const currentTransition = coreMaterial.uniforms.uTransition.value;
@@ -304,15 +386,35 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
       } else {
         targetTransition = 4.0;
       }
-      coreMaterial.uniforms.uTransition.value += (targetTransition - currentTransition) * 5.0 * dt;
+      const isTest = typeof window !== "undefined" && window.location.search.includes("test=true");
+      if (isTest) {
+        coreMaterial.uniforms.uTransition.value = targetTransition;
+      } else {
+        coreMaterial.uniforms.uTransition.value += (targetTransition - currentTransition) * 5.0 * dt;
+      }
     }
 
     // 1. Interpolate rotations
     if (isDragging.current) {
-      // Smooth follow during drag
-      currentRotX.current += (targetRotX.current - currentRotX.current) * 16 * dt;
-      currentRotY.current += (targetRotY.current - currentRotY.current) * 16 * dt;
+      // Underdamped spring follow for rotation drag (tactile lag + overshoot elastic feel matching CSS curves)
+      const stiffness = 80.0;
+      const damping = 12.0;
+      
+      const forceX = -stiffness * (currentRotX.current - targetRotX.current) - damping * rotVelX.current;
+      const forceY = -stiffness * (currentRotY.current - targetRotY.current) - damping * rotVelY.current;
+      
+      rotVelX.current += forceX * dt;
+      rotVelY.current += forceY * dt;
+      
+      currentRotX.current += rotVelX.current * dt;
+      currentRotY.current += rotVelY.current * dt;
     } else {
+      // Sync momentum velocity to spring velocity on release
+      if (Math.abs(velX.current) > 0.01 || Math.abs(velY.current) > 0.01) {
+        rotVelX.current = velX.current;
+        rotVelY.current = velY.current;
+      }
+      
       // Apply momentum decay on release (spring friction model)
       velX.current *= Math.exp(-3.2 * dt);
       velY.current *= Math.exp(-3.2 * dt);
@@ -326,12 +428,18 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
       // Update targets to settle on current angles
       targetRotX.current = currentRotX.current;
       targetRotY.current = currentRotY.current;
+
+      // Reset drag spring velocities
+      rotVelX.current = 0;
+      rotVelY.current = 0;
     }
 
     // 2. Slow continuous idle ambient drift & wobble (AdOnMo standard)
-    const idleX = Math.sin(time * 0.3) * 0.08;
-    const idleY = time * 0.06; // continuous gentle Y spin
-    const idleZ = Math.cos(time * 0.25) * 0.05;
+    const speedMult = reducedMotion ? 0.25 : 1.0;
+    const ampMult = reducedMotion ? 0.25 : 1.0;
+    const idleX = Math.sin(time * 0.3 * speedMult) * 0.08 * ampMult;
+    const idleY = time * 0.06 * speedMult; // continuous gentle Y spin
+    const idleZ = Math.cos(time * 0.25 * speedMult) * 0.05 * ampMult;
 
     // Apply rotation only to the visual group ref, leaving parent collision bounds static
     const visual = visualGroupRef.current;
@@ -367,7 +475,20 @@ export default function ShatteredCore({ studyMode = false, scrollProgress = 0 }:
       </group>
 
       {/* Invisible static hitbox sphere to keep grab checks completely stable */}
-      <mesh>
+      <mesh
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          if (typeof document !== "undefined") {
+            document.body.classList.add("cursor-grab");
+          }
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          if (typeof document !== "undefined") {
+            document.body.classList.remove("cursor-grab");
+          }
+        }}
+      >
         <sphereGeometry args={[0.65, 16, 16]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>

@@ -237,7 +237,34 @@ export default function Showcase() {
     setIsMuted(newMute);
     soundEngine.setMute(newMute);
   };
+  // Mobile mode support state
+  const [mobileMode, setMobileMode] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => {
+      setMobileMode(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Continuous material hum loops and triggers
+  useEffect(() => {
+    if (loaderState === "completed" && !isMuted) {
+      soundEngine.startMaterialHum();
+      soundEngine.updateMaterialHum(scrollProgress);
+    } else {
+      soundEngine.stopMaterialHum();
+    }
+  }, [loaderState, isMuted]);
+
+  useEffect(() => {
+    if (loaderState === "completed" && !isMuted) {
+      soundEngine.updateMaterialHum(scrollProgress);
+    }
+  }, [scrollProgress, loaderState, isMuted]);
   // Orbit navigation snap-to-index selector
   const goToPanel = (index: number) => {
     if (loaderState !== "completed" || studyMode) return;
@@ -273,12 +300,13 @@ export default function Showcase() {
         data-cursor={isCompleted && !studyMode ? "drag" : undefined}
       >
         <Canvas
+          dpr={mobileMode ? 1.2 : [1, 2]}
           camera={{ position: [0, 0, 5], fov: 45 }}
           style={{ width: "100%", height: "100%", display: "block", pointerEvents: "auto" }}
           gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         >
           <color attach="background" args={["#000000"]} />
-          <CameraRig scrollProgress={scrollProgress} />
+          <CameraRig scrollProgress={scrollProgress} mobileMode={mobileMode} />
           
           {/* Ambient Lighting & Main Directional Keylights */}
           <ambientLight intensity={0.65} />
@@ -288,7 +316,7 @@ export default function Showcase() {
           <pointLight position={[0, 0, 1.2]} intensity={2.0} distance={8} color="#7700ff" decay={1.5} />
 
           {/* Drifting ambient pink-blue background */}
-          <AmbientBackground />
+          <AmbientBackground scrollProgress={scrollProgress} />
 
           {/* Intro, Impact, & Shatter Loader Component */}
           {loaderState !== "completed" && (
@@ -324,6 +352,8 @@ export default function Showcase() {
                 gradientTexture={gradientTexture}
                 studyMode={studyMode}
                 scrollProgress={scrollProgress}
+                reducedMotion={reducedMotion}
+                mobileMode={mobileMode}
               />
             )}
           </Canvas>
@@ -403,23 +433,7 @@ export default function Showcase() {
           </footer>
         )}
 
-        {/* Phase 1 Isolated Overlay Text */}
-        {isPhase1Isolated && loaderState === "completed" && (
-          <div style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            color: "rgba(255, 255, 255, 0.4)",
-            fontFamily: "var(--font-sans)",
-            fontSize: "0.85rem",
-            letterSpacing: "0.45em",
-            pointerEvents: "none",
-            textTransform: "uppercase"
-          }}>
-            CORE PLACEHOLDER
-          </div>
-        )}
+
 
         {/* Back To Orbit Affordance (only visible in fullscreen mode) */}
         {studyMode && (
@@ -444,7 +458,7 @@ export default function Showcase() {
         <div style={{
           position: "fixed",
           bottom: "20px",
-          right: "20px",
+          left: "20px",
           backgroundColor: "rgba(0, 0, 0, 0.8)",
           color: "#00e5ff",
           padding: "8px 12px",
@@ -454,7 +468,7 @@ export default function Showcase() {
           borderRadius: "4px",
           pointerEvents: "none"
         }}>
-          SCROLL: {scrollProgress.toFixed(3)}
+          SCROLL: {scrollProgress.toFixed(3)} | W: {typeof window !== "undefined" ? window.innerWidth : "SSR"} | MOB_STATE: {mobileMode ? "Y" : "N"} | CAM: {typeof window !== "undefined" ? `${((window as any).camX || 0).toFixed(2)}, ${((window as any).camY || 0).toFixed(2)}, ${((window as any).camZ || 0).toFixed(2)}` : ""}
         </div>
       )}
       {/* Phase 6B: 6 Typography Content Overlays */}
@@ -462,6 +476,7 @@ export default function Showcase() {
         <>
           {/* Section 1: Faceted Glass */}
           <div 
+            className="technique-overlay"
             style={{
               position: "fixed",
               left: "8%",
@@ -469,7 +484,7 @@ export default function Showcase() {
               transform: `translateY(calc(-50% - ${scrollProgress * 60}px))`,
               maxWidth: "400px",
               opacity: Math.max(0, Math.min(1.0, (0.08 - scrollProgress) * 12.5)), // fades out fully by 0.08
-              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              transition: "opacity 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), transform 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), background 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96)",
               color: "#f5f5f7",
               pointerEvents: "none",
               zIndex: 3,
@@ -509,6 +524,7 @@ export default function Showcase() {
 
           {/* Section 2: Liquid Metal */}
           <div 
+            className="technique-overlay"
             style={{
               position: "fixed",
               left: "8%",
@@ -516,7 +532,7 @@ export default function Showcase() {
               transform: `translateY(calc(-50% + ${(0.2 - scrollProgress) * 60}px))`,
               maxWidth: "400px",
               opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.13) * 14.2, (0.27 - scrollProgress) * 14.2))), // peaks at 0.20, range 0.13-0.27
-              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              transition: "opacity 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), transform 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), background 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96)",
               color: "#f5f5f7",
               pointerEvents: "none",
               zIndex: 3,
@@ -556,6 +572,7 @@ export default function Showcase() {
 
           {/* Section 3: Crystal Growth */}
           <div 
+            className="technique-overlay"
             style={{
               position: "fixed",
               left: "8%",
@@ -563,7 +580,7 @@ export default function Showcase() {
               transform: `translateY(calc(-50% + ${(0.4 - scrollProgress) * 60}px))`,
               maxWidth: "400px",
               opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.33) * 14.2, (0.47 - scrollProgress) * 14.2))), // peaks at 0.40, range 0.33-0.47
-              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              transition: "opacity 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), transform 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), background 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96)",
               color: "#f5f5f7",
               pointerEvents: "none",
               zIndex: 3,
@@ -603,6 +620,7 @@ export default function Showcase() {
 
           {/* Section 4: Dark Obsidian */}
           <div 
+            className="technique-overlay"
             style={{
               position: "fixed",
               left: "8%",
@@ -610,7 +628,7 @@ export default function Showcase() {
               transform: `translateY(calc(-50% + ${(0.6 - scrollProgress) * 60}px))`,
               maxWidth: "400px",
               opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.53) * 14.2, (0.67 - scrollProgress) * 14.2))), // peaks at 0.60, range 0.53-0.67
-              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              transition: "opacity 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), transform 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), background 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96)",
               color: "#f5f5f7",
               pointerEvents: "none",
               zIndex: 3,
@@ -659,6 +677,7 @@ export default function Showcase() {
 
           {/* Section 5: Pure Light */}
           <div 
+            className="technique-overlay"
             style={{
               position: "fixed",
               left: "8%",
@@ -666,7 +685,7 @@ export default function Showcase() {
               transform: `translateY(calc(-50% + ${(0.8 - scrollProgress) * 60}px))`,
               maxWidth: "400px",
               opacity: Math.max(0, Math.min(1.0, Math.min((scrollProgress - 0.73) * 14.2, (0.87 - scrollProgress) * 14.2))), // peaks at 0.80, range 0.73-0.87
-              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              transition: "opacity 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), transform 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), background 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96)",
               color: "#f5f5f7",
               pointerEvents: "none",
               zIndex: 3,
@@ -715,6 +734,7 @@ export default function Showcase() {
 
           {/* Section 6: Closing Statement */}
           <div 
+            className="technique-overlay"
             style={{
               position: "fixed",
               left: "8%",
@@ -722,7 +742,7 @@ export default function Showcase() {
               transform: `translateY(calc(-50% + ${(1.0 - scrollProgress) * 60}px))`,
               maxWidth: "500px",
               opacity: Math.max(0, Math.min(1.0, (scrollProgress - 0.93) * 14.2)), // fades in starting at 0.93
-              transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+              transition: "opacity 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), transform 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96), background 0.8s cubic-bezier(0.25, 1.2, 0.4, 0.96)",
               color: "#f5f5f7",
               pointerEvents: "none",
               zIndex: 3,
@@ -762,22 +782,21 @@ export default function Showcase() {
 }
 
 // Phase 6B Scroll-Driven Camera Choreography Rig
-function CameraRig({ scrollProgress }: { scrollProgress: number }) {
+function CameraRig({ scrollProgress, mobileMode }: { scrollProgress: number; mobileMode?: boolean }) {
   const targetPos = useRef(new THREE.Vector3(0, 0, 5));
+  const mobileModeRef = useRef(mobileMode);
+  const velocity = useRef(new THREE.Vector3(0, 0, 0));
+  
+  mobileModeRef.current = mobileMode;
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
+    const isMobile = mobileModeRef.current;
 
-    // Camera orbit coordinates:
-    // State 0 (Glass): [0.0, 0.0, 5.0]
-    // State 1 (Liquid Metal): [2.2, 0.8, 3.8]
-    // State 2 (Crystal Growth): [-2.0, -1.0, 4.0]
-    // State 3 (Dark Obsidian): [0.0, 2.5, 4.0]
-    // State 4 (Pure Light): [0.0, 0.0, 3.2]
-    // Closing: [0.0, 0.0, 5.5]
+    // Camera orbit coordinates (adjusted for mobile screen safety):
     const p0 = new THREE.Vector3(0.0, 0.0, 5.0);
-    const p1 = new THREE.Vector3(2.2, 0.8, 3.8);
-    const p2 = new THREE.Vector3(-2.0, -1.0, 4.0);
+    const p1 = isMobile ? new THREE.Vector3(0.0, 0.5, 4.4) : new THREE.Vector3(2.2, 0.8, 3.8);
+    const p2 = isMobile ? new THREE.Vector3(0.0, -0.5, 4.4) : new THREE.Vector3(-2.0, -1.0, 4.0);
     const p3 = new THREE.Vector3(0.0, 2.5, 4.0);
     const p4 = new THREE.Vector3(0.0, 0.0, 3.2);
     const p5 = new THREE.Vector3(0.0, 0.0, 5.5);
@@ -799,8 +818,22 @@ function CameraRig({ scrollProgress }: { scrollProgress: number }) {
       targetPos.current.lerpVectors(p4, p5, factor);
     }
 
-    // Smoothly interpolate the camera position
-    state.camera.position.lerp(targetPos.current, 5.0 * dt);
+    // Second-order spring damper physics (overshoot inertia feel matching CSS curves)
+    const stiffness = 18.0;
+    const damping = 5.2;
+    
+    // Accel = -stiffness * (current - target) - damping * velocity
+    const diff = new THREE.Vector3().subVectors(state.camera.position, targetPos.current);
+    const force = diff.multiplyScalar(-stiffness).sub(new THREE.Vector3().copy(velocity.current).multiplyScalar(damping));
+    
+    velocity.current.addScaledVector(force, dt);
+    state.camera.position.addScaledVector(velocity.current, dt);
+    
+    if (typeof window !== "undefined") {
+      (window as any).camX = state.camera.position.x;
+      (window as any).camY = state.camera.position.y;
+      (window as any).camZ = state.camera.position.z;
+    }
     
     // Always look at the core center
     state.camera.lookAt(0, 0, 0);
