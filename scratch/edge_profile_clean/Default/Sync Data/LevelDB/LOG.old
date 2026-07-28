@@ -1,3 +1,6 @@
-2026/07/23-20:58:44.204 3e18 Reusing MANIFEST C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\Sync Data\LevelDB/MANIFEST-000001
-2026/07/23-20:58:44.206 3e18 Recovering log #3
-2026/07/23-20:58:44.208 3e18 Reusing old log C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\Sync Data\LevelDB/000003.log 
+2026/07/27-20:47:22.221 41b8 Reusing MANIFEST C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\Sync Data\LevelDB/MANIFEST-000001
+2026/07/27-20:47:22.238 41b8 Recovering log #3
+2026/07/27-20:47:22.252 41b8 Reusing old log C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\Sync Data\LevelDB/000003.log 
+2026/07/27-20:47:23.774 41b8 Level-0 table #5: started
+2026/07/27-20:47:23.801 41b8 Level-0 table #5: 94293 bytes OK
+2026/07/27-20:47:23.805 41b8 Delete type=0 #3

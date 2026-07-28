@@ -1,6 +1,15 @@
-2026/07/21-20:11:31.038 334c Reusing MANIFEST C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
-2026/07/21-20:11:31.040 334c Recovering log #21
-2026/07/21-20:11:31.040 334c Reusing old log C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/000021.log 
-2026/07/21-20:11:32.245 2154 Level-0 table #25: started
-2026/07/21-20:11:32.279 2154 Level-0 table #25: 683144 bytes OK
-2026/07/21-20:11:32.283 2154 Delete type=0 #21
+2026/07/27-20:47:25.168 20dc Reusing MANIFEST C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/07/27-20:47:25.174 20dc Recovering log #27
+2026/07/27-20:47:25.177 20dc Reusing old log C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/000027.log 
+2026/07/27-20:47:25.406 4a20 Level-0 table #31: started
+2026/07/27-20:47:25.412 4a20 Level-0 table #31: 683212 bytes OK
+2026/07/27-20:47:25.415 4a20 Delete type=0 #27
+2026/07/27-20:47:25.416 4a20 Compacting 4@0 + 1@1 files
+2026/07/27-20:47:25.427 4a20 Generated table #32@0: 4 keys, 683120 bytes
+2026/07/27-20:47:25.428 4a20 Compacted 4@0 + 1@1 files => 683120 bytes
+2026/07/27-20:47:25.431 4a20 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/07/27-20:47:25.432 4a20 Delete type=2 #19
+2026/07/27-20:47:25.432 4a20 Delete type=2 #22
+2026/07/27-20:47:25.432 4a20 Delete type=2 #25
+2026/07/27-20:47:25.433 4a20 Delete type=2 #28
+2026/07/27-20:47:25.433 4a20 Delete type=2 #31

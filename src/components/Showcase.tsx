@@ -362,11 +362,36 @@ export default function Showcase() {
       {/* 2D HTML UI Overlay */}
       <div className="ui-overlay">
         {/* Top Header */}
-        {!isPhase1Isolated && loaderState === "completed" && (
+        {loaderState === "completed" && (
           <header className="header fade-in-element">
-          <div className="logo-container">
-            <span className="logo-main">FRACTURE</span>
-            <span className="logo-sub">CINEMATIC ORBIT NAVIGATION</span>
+          <div className="logo-container" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="logo-icon-svg">
+              <defs>
+                <linearGradient id="logoGradCyanPink" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00f2fe" />
+                  <stop offset="50%" stopColor="#4facfe" />
+                  <stop offset="100%" stopColor="#ff0844" />
+                </linearGradient>
+                <linearGradient id="logoGradPinkCyan" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ff758c" />
+                  <stop offset="100%" stopColor="#00c6ff" />
+                </linearGradient>
+                <filter id="logoGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="2.5" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              <path d="M20 2 L35 11 L35 29 L20 38 L5 29 L5 11 Z" stroke="url(#logoGradCyanPink)" strokeWidth="2.2" fill="rgba(0, 242, 254, 0.05)" filter="url(#logoGlow)" />
+              <path d="M20 2 L20 38" stroke="url(#logoGradPinkCyan)" strokeWidth="1.2" strokeDasharray="1.5 1.5" opacity="0.65" />
+              <path d="M5 11 L35 29" stroke="url(#logoGradCyanPink)" strokeWidth="1.2" opacity="0.75" />
+              <path d="M35 11 L5 29" stroke="url(#logoGradPinkCyan)" strokeWidth="1.2" opacity="0.75" />
+              <polygon points="20,12 27,20 20,28 13,20" fill="url(#logoGradCyanPink)" opacity="0.9" />
+              <circle cx="20" cy="20" r="3.5" fill="#ffffff" filter="url(#logoGlow)" />
+            </svg>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span className="logo-main">FRACTURE</span>
+              <span className="logo-sub">CINEMATIC ORBIT NAVIGATION</span>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
             <div className="instructions">

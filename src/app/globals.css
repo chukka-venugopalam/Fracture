@@ -105,15 +105,32 @@ main {
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
-  opacity: 0;
-  transform: translateY(-12px);
+  opacity: 1;
+  transform: translateY(0);
   transition: all 0.9s var(--ease-signature);
 }
 
 .logo-container {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 14px;
   pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.4s var(--ease-signature);
+}
+
+.logo-container:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.logo-icon-svg {
+  filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.4));
+  transition: transform 0.6s var(--ease-signature), filter 0.6s ease;
+}
+
+.logo-container:hover .logo-icon-svg {
+  transform: rotate(30deg) scale(1.08);
+  filter: drop-shadow(0 0 16px rgba(255, 8, 68, 0.7));
 }
 
 .logo-main {

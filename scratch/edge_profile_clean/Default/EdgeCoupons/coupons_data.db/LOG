@@ -1,6 +1,6 @@
-2026/07/21-20:11:52.359 4e98 Reusing MANIFEST C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
-2026/07/21-20:11:52.619 4e98 Recovering log #24
-2026/07/21-20:11:52.619 4e98 Reusing old log C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/000024.log 
-2026/07/21-20:11:52.768 199c Level-0 table #28: started
-2026/07/21-20:11:52.778 199c Level-0 table #28: 683212 bytes OK
-2026/07/21-20:11:52.784 199c Delete type=0 #24
+2026/07/27-20:50:28.563 2b78 Reusing MANIFEST C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/07/27-20:50:28.592 2b78 Recovering log #30
+2026/07/27-20:50:28.594 2b78 Reusing old log C:\Users\venugopal\OneDrive\Documents\Projects\fracture\scratch\edge_profile_clean\Default\EdgeCoupons/coupons_data.db/000030.log 
+2026/07/27-20:50:40.841 4a2c Level-0 table #35: started
+2026/07/27-20:50:41.619 4a2c Level-0 table #35: 683212 bytes OK
+2026/07/27-20:50:41.624 4a2c Delete type=0 #30
