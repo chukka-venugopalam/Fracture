@@ -364,31 +364,47 @@ export default function Showcase() {
         {/* Top Header */}
         {loaderState === "completed" && (
           <header className="header fade-in-element">
-          <div className="logo-container" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="logo-icon-svg">
+          <div className="logo-container">
+            <svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="logo-icon-svg">
               <defs>
-                <linearGradient id="logoGradCyanPink" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#00f2fe" />
-                  <stop offset="50%" stopColor="#4facfe" />
+                <linearGradient id="polyPinkWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f472b6" />
+                  <stop offset="50%" stopColor="#f8fafc" />
+                  <stop offset="100%" stopColor="#38bdf8" />
+                </linearGradient>
+                <linearGradient id="polyBlueCyan" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#00c6ff" />
                   <stop offset="100%" stopColor="#ff0844" />
                 </linearGradient>
-                <linearGradient id="logoGradPinkCyan" x1="100%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#ff758c" />
-                  <stop offset="100%" stopColor="#00c6ff" />
+                <linearGradient id="polyFacetDark" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#ec4899" stopOpacity="0.9" />
                 </linearGradient>
-                <filter id="logoGlow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <linearGradient id="polyFacetLight" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#7dd3fc" stopOpacity="0.7" />
+                </linearGradient>
+                <filter id="coreGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
                   <feComposite in="SourceGraphic" in2="blur" operator="over" />
                 </filter>
               </defs>
-              <path d="M20 2 L35 11 L35 29 L20 38 L5 29 L5 11 Z" stroke="url(#logoGradCyanPink)" strokeWidth="2.2" fill="rgba(0, 242, 254, 0.05)" filter="url(#logoGlow)" />
-              <path d="M20 2 L20 38" stroke="url(#logoGradPinkCyan)" strokeWidth="1.2" strokeDasharray="1.5 1.5" opacity="0.65" />
-              <path d="M5 11 L35 29" stroke="url(#logoGradCyanPink)" strokeWidth="1.2" opacity="0.75" />
-              <path d="M35 11 L5 29" stroke="url(#logoGradPinkCyan)" strokeWidth="1.2" opacity="0.75" />
-              <polygon points="20,12 27,20 20,28 13,20" fill="url(#logoGradCyanPink)" opacity="0.9" />
-              <circle cx="20" cy="20" r="3.5" fill="#ffffff" filter="url(#logoGlow)" />
+              {/* Outer Polyhedron Edge Boundary (Icosahedron Silhouette) */}
+              <path d="M20 3 L35 11 L35 29 L20 37 L5 29 L5 11 Z" fill="rgba(15, 23, 42, 0.6)" stroke="url(#polyPinkWhite)" strokeWidth="1.6" filter="url(#coreGlow)" />
+              {/* Internal Polyhedron Facets (2D Projection of 3D Crystalline Core) */}
+              <polygon points="20,3 35,11 20,16 5,11" fill="url(#polyFacetLight)" opacity="0.65" />
+              <polygon points="35,11 35,29 20,20 20,16" fill="url(#polyPinkWhite)" opacity="0.8" />
+              <polygon points="35,29 20,37 20,20" fill="url(#polyFacetDark)" opacity="0.85" />
+              <polygon points="20,37 5,29 20,20" fill="url(#polyBlueCyan)" opacity="0.75" />
+              <polygon points="5,11 20,3 20,16 5,29" fill="url(#polyFacetLight)" opacity="0.5" />
+              {/* Center Facet Diamond Interlocking Core */}
+              <polygon points="20,10 28,20 20,30 12,20" fill="url(#polyPinkWhite)" opacity="0.9" stroke="#ffffff" strokeWidth="0.8" />
+              {/* Refracting Wireframe Facet Lines */}
+              <polyline points="20,3 20,37" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="1" strokeDasharray="2 2" />
+              <polyline points="5,11 35,29" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="0.8" />
+              <polyline points="35,11 5,29" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="0.8" />
             </svg>
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div className="logo-text-group">
               <span className="logo-main">FRACTURE</span>
               <span className="logo-sub">CINEMATIC ORBIT NAVIGATION</span>
             </div>
@@ -478,24 +494,7 @@ export default function Showcase() {
         )}
       </div>
       </div>
-      {/* Temporary Debug Scroll Progress Readout */}
-      {loaderState === "completed" && (
-        <div style={{
-          position: "fixed",
-          bottom: "20px",
-          left: "20px",
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          color: "#00e5ff",
-          padding: "8px 12px",
-          fontFamily: "monospace",
-          fontSize: "12px",
-          zIndex: 9999,
-          borderRadius: "4px",
-          pointerEvents: "none"
-        }}>
-          SCROLL: {scrollProgress.toFixed(3)} | W: {typeof window !== "undefined" ? window.innerWidth : "SSR"} | MOB_STATE: {mobileMode ? "Y" : "N"} | CAM: {typeof window !== "undefined" ? `${((window as any).camX || 0).toFixed(2)}, ${((window as any).camY || 0).toFixed(2)}, ${((window as any).camZ || 0).toFixed(2)}` : ""}
-        </div>
-      )}
+
       {/* Phase 6B: 6 Typography Content Overlays */}
       {loaderState === "completed" && (
         <>

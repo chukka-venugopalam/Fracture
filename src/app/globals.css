@@ -133,6 +133,11 @@ main {
   filter: drop-shadow(0 0 16px rgba(255, 8, 68, 0.7));
 }
 
+.logo-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .logo-main {
   font-size: 1.5rem;
   font-weight: 700;
@@ -587,6 +592,34 @@ body * {
   .audio-mute-btn {
     padding: 6px 10px !important;
     font-size: 0.65rem !important;
+  }
+
+  /* Responsive header logo scaling on mobile */
+  .logo-container {
+    gap: 10px !important;
+  }
+
+  .logo-icon-svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .logo-text-group {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .logo-main {
+    font-size: 1.05rem !important;
+    letter-spacing: 0.32em !important;
+    line-height: 1.1 !important;
+  }
+
+  .logo-sub {
+    font-size: 0.42rem !important;
+    letter-spacing: 0.22em !important;
+    margin-top: 0.15rem !important;
+    white-space: nowrap !important;
   }
 
   /* Dock technique overlays to bottom as glassmorphic cards */
