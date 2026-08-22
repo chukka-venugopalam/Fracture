@@ -161,7 +161,7 @@ export default function AmbientBackground({ scrollProgress = 0 }: AmbientBackgro
       } else {
         targetTransition = 4.0;
       }
-      const isTest = typeof window !== "undefined" && window.location.search.includes("test=true");
+      const isTest = typeof window !== "undefined" && process.env.NODE_ENV !== "production" && window.location.search.includes("test=true");
       if (isTest) {
         materialRef.current.uniforms.uTransition.value = targetTransition;
       } else {

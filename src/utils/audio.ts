@@ -15,14 +15,14 @@ class AudioEngine {
     if (this.ctx) return;
 
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioContextClass();
       
       this.masterGain = this.ctx.createGain();
       this.masterGain.connect(this.ctx.destination);
       this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.42, this.ctx.currentTime);
-    } catch (e) {
-      console.warn("Web Audio API not supported in this browser:", e);
+    } catch (_e) {
+      console.warn("Web Audio API not supported in this browser:", _e);
     }
   }
 
@@ -114,7 +114,7 @@ class AudioEngine {
       try {
         if (o1) o1.stop();
         if (o2) o2.stop();
-      } catch (e) {}
+      } catch {}
     }, 400);
 
     this.humOsc1 = null;
@@ -387,7 +387,7 @@ class AudioEngine {
         if (o2) o2.stop();
         if (oh) oh.stop();
         if (ol) ol.stop();
-      } catch (e) {}
+      } catch {}
     }, 300);
 
     this.matOsc1 = null;

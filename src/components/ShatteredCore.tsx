@@ -179,14 +179,12 @@ const coreFragmentShader = `
 
 interface ShatteredCoreProps {
   gradientTexture: THREE.CanvasTexture | null;
-  studyMode?: boolean;
   scrollProgress?: number;
   reducedMotion?: boolean;
   mobileMode?: boolean;
 }
 
 export default function ShatteredCore({ 
-  studyMode = false, 
   scrollProgress = 0,
   reducedMotion = false,
   mobileMode = false
@@ -216,22 +214,14 @@ export default function ShatteredCore({
   const lastMouseY = useRef<number>(0);
 
   const { gl, size } = useThree();
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
 
-  // Create core shader material manually to avoid R3F uniforms reference re-assignment issues
-  const coreMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: coreVertexShader,
-      fragmentShader: coreFragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uTransition: { value: 0 },
-        uReducedMotion: { value: 0 },
-        uMobileMode: { value: 0 },
-      },
-      transparent: true,
-      depthWrite: true,
-    });
-  }, []);
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uTransition: { value: 0 },
+    uReducedMotion: { value: 0 },
+    uMobileMode: { value: 0 },
+  }), []);
 
   // Attach canvas-wide pointer events for tactile drag-to-rotate
   useEffect(() => {
@@ -359,21 +349,27 @@ export default function ShatteredCore({
 
   const reducedMotionRef = useRef(reducedMotion);
   const mobileModeRef = useRef(mobileMode);
-  reducedMotionRef.current = reducedMotion;
-  mobileModeRef.current = mobileMode;
+  
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    mobileModeRef.current = mobileMode;
+  }, [mobileMode]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
     const time = state.clock.getElapsedTime();
 
     // Update shader uniforms with organic lerping
-    if (coreMaterial) {
-      coreMaterial.uniforms.uTime.value = time;
-      coreMaterial.uniforms.uReducedMotion.value = reducedMotionRef.current ? 1.0 : 0.0;
-      coreMaterial.uniforms.uMobileMode.value = mobileModeRef.current ? 1.0 : 0.0;
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = time;
+      materialRef.current.uniforms.uReducedMotion.value = reducedMotionRef.current ? 1.0 : 0.0;
+      materialRef.current.uniforms.uMobileMode.value = mobileModeRef.current ? 1.0 : 0.0;
       
       // Interpolate transition progress smoothly
-      const currentTransition = coreMaterial.uniforms.uTransition.value;
+      const currentTransition = materialRef.current.uniforms.uTransition.value;
       let targetTransition = 0.0;
       if (scrollProgress <= 0.2) {
         targetTransition = (scrollProgress / 0.2) * 1.0;
@@ -386,11 +382,11 @@ export default function ShatteredCore({
       } else {
         targetTransition = 4.0;
       }
-      const isTest = typeof window !== "undefined" && window.location.search.includes("test=true");
+      const isTest = typeof window !== "undefined" && process.env.NODE_ENV !== "production" && window.location.search.includes("test=true");
       if (isTest) {
-        coreMaterial.uniforms.uTransition.value = targetTransition;
+        materialRef.current.uniforms.uTransition.value = targetTransition;
       } else {
-        coreMaterial.uniforms.uTransition.value += (targetTransition - currentTransition) * 5.0 * dt;
+        materialRef.current.uniforms.uTransition.value += (targetTransition - currentTransition) * 5.0 * dt;
       }
     }
 
@@ -459,7 +455,14 @@ export default function ShatteredCore({
         {/* Faceted Crystal Core Polyhedron */}
         <mesh>
           <icosahedronGeometry args={[0.58, 2]} />
-          <primitive object={coreMaterial} attach="material" />
+          <shaderMaterial
+            ref={materialRef}
+            vertexShader={coreVertexShader}
+            fragmentShader={coreFragmentShader}
+            uniforms={uniforms}
+            transparent
+            depthWrite
+          />
         </mesh>
         
         {/* Glowing border wireframe highlighting facets */}

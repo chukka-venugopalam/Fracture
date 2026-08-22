@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useSyncExternalStore } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useProgress } from "@react-three/drei";
-import Carousel from "./Carousel";
 import GlassShatterLoader from "./GlassShatterLoader";
 import CustomCursor from "./CustomCursor";
 import ShatteredCore from "./ShatteredCore";
@@ -11,49 +10,38 @@ import AmbientBackground from "./AmbientBackground";
 import { soundEngine } from "@/utils/audio";
 import * as THREE from "three";
 
-const PANEL_COUNT = 5;
-const ANGLE_STEP = (2 * Math.PI) / PANEL_COUNT;
+const subscribeReducedMotion = (callback: () => void) => {
+  if (typeof window === "undefined") return () => {};
+  const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+};
 
-const panelNames = [
-  "ATLANTIS",
-  "HEX SNAKE SCALES",
-  "VOLCANIC FRACTURE",
-  "CRYSTAL CAVE GROWTH",
-  "NEBULA IGNITION"
-];
+const getReducedMotionSnapshot = () => {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+};
 
-const panelShortDescriptors = [
-  "submerged ruins",
-  "iridescent scales",
-  "obsidian fractures",
-  "timelapse growth",
-  "weightless field"
-];
-
-const isPhase1Isolated = true; // Toggle for Phase 1 Signature Moment isolation
+const getReducedMotionServerSnapshot = () => false;
 
 export default function Showcase() {
   const [progress, setProgress] = useState(0);
   const [loaderState, setLoaderState] = useState<"loading" | "impact" | "shattering" | "completed">("loading");
   const [collisionTriggered, setCollisionTriggered] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [studyMode, setStudyMode] = useState(false);
   
   // Audio state (muted by default)
   const [isMuted, setIsMuted] = useState(true);
 
-  // Reduced motion support state
-  const [reducedMotion, setReducedMotion] = useState(false);
+  // Reduced motion support via useSyncExternalStore
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot
+  );
 
-  const targetRotation = useRef<number>(0);
-  const currentRotation = useRef<number>(0);
-
-  // Canvas-based pink-white-to-blue gradient texture (client-only state)
-  const [gradientTexture, setGradientTexture] = useState<THREE.CanvasTexture | null>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  useEffect(() => {
+  // Canvas-based pink-white-to-blue gradient texture
+  const gradientTexture = useMemo(() => {
+    if (typeof document === "undefined") return null;
     const canvas = document.createElement("canvas");
     canvas.width = 256;
     canvas.height = 256;
@@ -68,57 +56,37 @@ export default function Showcase() {
     }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    setGradientTexture(texture);
+    return texture;
   }, []);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Hook into real asset load progress
   const { progress: loadProgress } = useProgress();
 
-  // Query prefers-reduced-motion media settings
+  // Loading Progress Simulation (min 2.0s duration)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mediaQuery.matches);
-
-    const handleQueryChange = (e: MediaQueryListEvent) => {
-      setReducedMotion(e.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleQueryChange);
-    return () => mediaQuery.removeEventListener("change", handleQueryChange);
-  }, []);
-
-  // Loading Progress Simulation (min 2.0s duration) with ?test=true bypass
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get("test") === "true") {
-        setLoaderState("completed");
-        setProgress(100);
-        setCollisionTriggered(true);
-        return;
+        const timer = setTimeout(() => {
+          setLoaderState("completed");
+          setProgress(100);
+          setCollisionTriggered(true);
+        }, 0);
+        return () => clearTimeout(timer);
       }
     }
 
     if (loaderState !== "loading") return;
 
     const minimumDuration = 2000; // 2 seconds minimum duration
-    const startTime = Date.now();
+    const startTime = typeof performance !== "undefined" ? performance.now() : Date.now();
     let animationFrameId: number;
 
     const updateProgress = () => {
-      // Guard against race conditions during client hydration
-      if (typeof window !== "undefined") {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("test") === "true") {
-          setLoaderState("completed");
-          setProgress(100);
-          setCollisionTriggered(true);
-          return;
-        }
-      }
-
-      const elapsed = Date.now() - startTime;
+      const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+      const elapsed = now - startTime;
       const simulatedProgress = Math.min((elapsed / minimumDuration) * 100, 100);
 
       // Mix simulated progress with actual load progress
@@ -144,14 +112,11 @@ export default function Showcase() {
 
   // Track window scroll progress for material transition
   useEffect(() => {
-    if (loaderState !== "completed") {
-      setScrollProgress(0);
-      return;
-    }
+    if (loaderState !== "completed") return;
 
     const handleScroll = () => {
-      // Allow visual query override for automated screenshot rendering tests
-      if (typeof window !== "undefined") {
+      // Allow visual query override for automated screenshot rendering tests in non-production
+      if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
         const urlParams = new URLSearchParams(window.location.search);
         const testScroll = urlParams.get("scroll");
         if (testScroll !== null) {
@@ -165,8 +130,8 @@ export default function Showcase() {
       const clientHeight = document.documentElement.clientHeight;
       const scrollRange = scrollHeight - clientHeight;
       if (scrollRange <= 0) return;
-      const progress = Math.max(0, Math.min(1.0, scrollTop / scrollRange));
-      setScrollProgress(progress);
+      const p = Math.max(0, Math.min(1.0, scrollTop / scrollRange));
+      setScrollProgress(p);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -258,30 +223,7 @@ export default function Showcase() {
     } else {
       soundEngine.stopMaterialHum();
     }
-  }, [loaderState, isMuted]);
-
-  useEffect(() => {
-    if (loaderState === "completed" && !isMuted) {
-      soundEngine.updateMaterialHum(scrollProgress);
-    }
-  }, [scrollProgress, loaderState, isMuted]);
-  // Orbit navigation snap-to-index selector
-  const goToPanel = (index: number) => {
-    if (loaderState !== "completed" || studyMode) return;
-    const angleForIndex = -index * ANGLE_STEP;
-    const currentRot = targetRotation.current;
-    
-    const twoPi = 2 * Math.PI;
-    const diff = ((angleForIndex - currentRot) % twoPi + twoPi) % twoPi;
-    
-    let targetDiff = diff;
-    if (targetDiff > Math.PI) {
-      targetDiff -= twoPi;
-    }
-    
-    targetRotation.current = currentRot + targetDiff;
-    setActiveIndex(index);
-  };
+  }, [loaderState, isMuted, scrollProgress]);
 
   const isLoading = loaderState === "loading";
   const isCompleted = loaderState === "completed";
@@ -289,7 +231,7 @@ export default function Showcase() {
   return (
     <>
       <div 
-        className={`showcase-container state-${loaderState} ${studyMode ? "study-active" : ""}`}
+        className={`showcase-container state-${loaderState}`}
       >
       {/* Custom Cursor Overlay */}
       <CustomCursor />
@@ -297,7 +239,7 @@ export default function Showcase() {
       {/* 3D R3F Canvas */}
       <div 
         className="canvas-wrapper" 
-        data-cursor={isCompleted && !studyMode ? "drag" : undefined}
+        data-cursor={isCompleted ? "drag" : undefined}
       >
         <Canvas
           dpr={mobileMode ? 1.2 : [1, 2]}
@@ -330,33 +272,16 @@ export default function Showcase() {
             />
           )}
 
-            {/* Interactive Orbit Carousel Ring & Anchored Core */}
-            {!isPhase1Isolated && (loaderState === "shattering" || loaderState === "completed") && (
-              <Carousel
-                activeIndex={activeIndex}
-                setActiveIndex={setActiveIndex}
-                isDragging={isDragging}
-                setIsDragging={setIsDragging}
-                targetRotation={targetRotation}
-                currentRotation={currentRotation}
-                studyMode={studyMode}
-                setStudyMode={setStudyMode}
-                loaderState={loaderState}
-                reducedMotion={reducedMotion}
-              />
-            )}
-
-            {/* Phase 1 Isolated Core Ball Placeholder */}
-            {isPhase1Isolated && loaderState === "completed" && (
-              <ShatteredCore
-                gradientTexture={gradientTexture}
-                studyMode={studyMode}
-                scrollProgress={scrollProgress}
-                reducedMotion={reducedMotion}
-                mobileMode={mobileMode}
-              />
-            )}
-          </Canvas>
+          {/* Core Ball */}
+          {loaderState === "completed" && (
+            <ShatteredCore
+              gradientTexture={gradientTexture}
+              scrollProgress={scrollProgress}
+              reducedMotion={reducedMotion}
+              mobileMode={mobileMode}
+            />
+          )}
+        </Canvas>
       </div>
 
       {/* 2D HTML UI Overlay */}
@@ -414,19 +339,20 @@ export default function Showcase() {
               <span>DRAG OR SWIPE</span>
             </div>
             <button 
-              className="audio-mute-btn"
+              className="audio-mute-btn" 
               onClick={toggleMute}
-              aria-label={isMuted ? "Unmute experience audio" : "Mute experience audio"}
+              data-cursor="audio"
+              aria-label={isMuted ? "Unmute audio" : "Mute audio"}
             >
-              {isMuted ? "SOUND: OFF" : "SOUND: ON"}
+              <span>SOUND: {isMuted ? "OFF" : "ON"}</span>
             </button>
           </div>
-        </header>
+          </header>
         )}
 
-        {/* Real Loading Indicator Overlay (Minimal: completeness of the ball is feedback) */}
+        {/* Loading Overlay Center text */}
         {isLoading && (
-          <div className="loading-indicator-overlay">
+          <div className="center-instructions loading-instructions">
             <div className="loading-indicator-content" style={{ textAlign: "center" }}>
               {/* Single serif accent title reserved for loading page */}
               <h1 
@@ -442,53 +368,6 @@ export default function Showcase() {
                 Fracture
               </h1>
               <span className="loading-label" style={{ opacity: 0.35 }}>Stitching Core Anchor</span>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Details panel - quiet, single-line label format in orbit mode */}
-        {!isPhase1Isolated && loaderState === "completed" && (
-          <footer className="footer fade-in-element">
-          <div className="material-info">
-            <div className="material-number">
-              {(activeIndex + 1).toString().padStart(2, "0")}
-            </div>
-            <div className="material-details">
-              <span className="material-label">ACTIVE PORTAL PREVIEW</span>
-              <h2 className="material-name" style={{ fontSize: "1.15rem", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 400 }}>
-                {panelNames[activeIndex]} <span className="serif-accent" style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.95rem", marginLeft: "0.6rem" }}>— {panelShortDescriptors[activeIndex]}</span>
-              </h2>
-            </div>
-          </div>
-
-          <div className="navigation-dots">
-            {panelNames.map((_, index) => (
-              <button
-                key={index}
-                className={`nav-dot ${index === activeIndex ? "active" : ""}`}
-                onClick={() => goToPanel(index)}
-                aria-label={`Orbit to ${panelNames[index]}`}
-              />
-            ))}
-          </div>
-          </footer>
-        )}
-
-
-
-        {/* Back To Orbit Affordance (only visible in fullscreen mode) */}
-        {studyMode && (
-          <div className="study-hud">
-            <button 
-              className="back-btn" 
-              onClick={() => setStudyMode(false)}
-              data-cursor="back"
-            >
-              <span>BACK TO ORBIT</span>
-            </button>
-            <div className="active-study-details">
-              <span className="study-tag">ACTIVE SHADER WORLD</span>
-              <h1 className="study-title">{panelNames[activeIndex]}</h1>
             </div>
           </div>
         )}
@@ -790,7 +669,7 @@ export default function Showcase() {
               letterSpacing: "0.06em",
               fontWeight: 300
             }}>
-              Built to show what's possible.
+              Built to show what&apos;s possible.
             </p>
           </div>
         </>
@@ -811,7 +690,9 @@ function CameraRig({ scrollProgress, mobileMode }: { scrollProgress: number; mob
   const mobileModeRef = useRef(mobileMode);
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
   
-  mobileModeRef.current = mobileMode;
+  useEffect(() => {
+    mobileModeRef.current = mobileMode;
+  }, [mobileMode]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
@@ -852,12 +733,6 @@ function CameraRig({ scrollProgress, mobileMode }: { scrollProgress: number; mob
     
     velocity.current.addScaledVector(force, dt);
     state.camera.position.addScaledVector(velocity.current, dt);
-    
-    if (typeof window !== "undefined") {
-      (window as any).camX = state.camera.position.x;
-      (window as any).camY = state.camera.position.y;
-      (window as any).camZ = state.camera.position.z;
-    }
     
     // Always look at the core center
     state.camera.lookAt(0, 0, 0);

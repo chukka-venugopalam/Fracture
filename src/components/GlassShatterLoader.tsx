@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useRef, useMemo, useEffect } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-
-const tempV = new THREE.Vector3();
 
 // Custom shader for the glowing stitching threads
 const threadVertexShader = `
@@ -132,6 +130,20 @@ interface ShardData {
 const BALL_RADIUS = 0.26;
 const GLASS_Z = 0.8;
 
+const smoothstep = (min: number, max: number, value: number) => {
+  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  return x * x * (3 - 2 * x);
+};
+
+// Deterministic PRNG to ensure pure idempotent geometry generation across renders
+function createPRNG(seed = 123456789) {
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return s / 4294967296;
+  };
+}
+
 export default function GlassShatterLoader({
   progress,
   loaderState,
@@ -140,7 +152,6 @@ export default function GlassShatterLoader({
   setCollisionTriggered,
   reducedMotion = false,
 }: GlassShatterLoaderProps) {
-  const { size, camera } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   
   const stitchingBallRef = useRef<THREE.Mesh>(null);
@@ -154,9 +165,14 @@ export default function GlassShatterLoader({
   const shatterTimeStart = useRef<number>(0);
   const timeDilation = useRef<number>(0.06); // Act 3: starts in extreme slow-mo
   const humStarted = useRef<boolean>(false);
+  const impactStartTime = useRef<number | null>(null);
+
+  const threadMaterialRef = useRef<THREE.ShaderMaterial>(null);
+  const shardMaterialRef = useRef<THREE.ShaderMaterial>(null);
 
   // Radial crack wireframe geometry generated mathematically on impact
   const crackLinesGeometry = useMemo(() => {
+    const rng = createPRNG(101);
     const points: THREE.Vector3[] = [];
     const ringCount = 6;
     const spokeCount = 14;
@@ -167,20 +183,18 @@ export default function GlassShatterLoader({
       const startPt = new THREE.Vector3(0, 0, 0);
       points.push(startPt);
       
-      let lastPt = startPt;
       for (let r = 1; r <= ringCount; r++) {
         const dist = (r / ringCount) * 2.2;
-        const jitterAngle = angle + (Math.sin(r * 4.0) * 0.1) + (Math.random() - 0.5) * 0.08;
+        const jitterAngle = angle + (Math.sin(r * 4.0) * 0.1) + (rng() - 0.5) * 0.08;
         const nextPt = new THREE.Vector3(
           Math.sin(jitterAngle) * dist,
           Math.cos(jitterAngle) * dist,
-          (Math.random() - 0.5) * 0.03
+          (rng() - 0.5) * 0.03
         );
         points.push(nextPt);
         if (r < ringCount) {
           points.push(nextPt);
         }
-        lastPt = nextPt;
       }
     }
     
@@ -201,36 +215,32 @@ export default function GlassShatterLoader({
     return new THREE.BufferGeometry().setFromPoints(points);
   }, []);
 
-  // 1. Thread Line Geometries for Stitching
+  // 1. Geodesic Stitching Lines Mesh
   const threadGeometry = useMemo(() => {
-    const spiralCount = 12;
-    const segmentsPerSpiral = 120;
+    const ico = new THREE.IcosahedronGeometry(BALL_RADIUS, 2);
+    const pos = ico.attributes.position;
     const vertices: number[] = [];
     const aProgressArr: number[] = [];
 
-    for (let s = 0; s < spiralCount; s++) {
-      const startAngle = (s / spiralCount) * Math.PI * 2;
-      for (let i = 0; i < segmentsPerSpiral; i++) {
-        const t1 = i / segmentsPerSpiral;
-        const t2 = (i + 1) / segmentsPerSpiral;
+    // Extract unique line segments
+    for (let i = 0; i < pos.count; i += 3) {
+      const p1 = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+      const p2 = new THREE.Vector3(pos.getX(i + 1), pos.getY(i + 1), pos.getZ(i + 1));
+      const p3 = new THREE.Vector3(pos.getX(i + 2), pos.getY(i + 2), pos.getZ(i + 2));
 
-        const theta1 = -Math.PI / 2 + t1 * Math.PI;
-        const phi1 = t1 * 6.5 * Math.PI + startAngle; // 3.25 full loops
+      // Order appearance by Y coordinate + subtle Z depth
+      const t1 = (p1.y + BALL_RADIUS) / (BALL_RADIUS * 2);
+      const t2 = (p2.y + BALL_RADIUS) / (BALL_RADIUS * 2);
+      const t3 = (p3.y + BALL_RADIUS) / (BALL_RADIUS * 2);
 
-        const x1 = BALL_RADIUS * Math.cos(theta1) * Math.cos(phi1);
-        const y1 = BALL_RADIUS * Math.sin(theta1);
-        const z1 = BALL_RADIUS * Math.cos(theta1) * Math.sin(phi1);
+      vertices.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+      aProgressArr.push(t1, t2);
 
-        const theta2 = -Math.PI / 2 + t2 * Math.PI;
-        const phi2 = t2 * 6.5 * Math.PI + startAngle;
+      vertices.push(p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
+      aProgressArr.push(t2, t3);
 
-        const x2 = BALL_RADIUS * Math.cos(theta2) * Math.cos(phi2);
-        const y2 = BALL_RADIUS * Math.sin(theta2);
-        const z2 = BALL_RADIUS * Math.cos(theta2) * Math.sin(phi2);
-
-        vertices.push(x1, y1, z1, x2, y2, z2);
-        aProgressArr.push(t1, t2);
-      }
+      vertices.push(p3.x, p3.y, p3.z, p1.x, p1.y, p1.z);
+      aProgressArr.push(t3, t1);
     }
 
     const geom = new THREE.BufferGeometry();
@@ -239,28 +249,21 @@ export default function GlassShatterLoader({
     return geom;
   }, []);
 
-  // Thread material
-  const threadMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: threadVertexShader,
-      fragmentShader: threadFragmentShader,
-      uniforms: {
-        uProgress: { value: 0 },
-        uColor: { value: new THREE.Color("#00aaff") },
-      },
-      transparent: true,
-      depthWrite: true,
-    });
-  }, []);
+  // Thread uniforms
+  const threadUniforms = useMemo(() => ({
+    uProgress: { value: 0 },
+    uColor: { value: new THREE.Color("#00aaff") },
+  }), []);
 
   // 2. Stitching Particle System
   const particleCount = 180;
   const particlesData = useMemo(() => {
+    const rng = createPRNG(202);
     const arr = [];
     for (let i = 0; i < particleCount; i++) {
       // Target coordinates on sphere surface
-      const u = Math.random();
-      const v = Math.random();
+      const u = rng();
+      const v = rng();
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
       
@@ -269,7 +272,7 @@ export default function GlassShatterLoader({
       const tz = BALL_RADIUS * Math.cos(phi);
 
       // Start coordinates (outer space)
-      const r = 2.5 + Math.random() * 1.5;
+      const r = 2.5 + rng() * 1.5;
       const sx = r * Math.sin(phi) * Math.cos(theta + Math.PI);
       const sy = r * Math.sin(phi) * Math.sin(theta + Math.PI);
       const sz = r * Math.cos(phi);
@@ -277,8 +280,8 @@ export default function GlassShatterLoader({
       arr.push({
         target: new THREE.Vector3(tx, ty, tz),
         start: new THREE.Vector3(sx, sy, sz),
-        offset: Math.random() * Math.PI * 2,
-        speed: 0.8 + Math.random() * 0.4,
+        offset: rng() * Math.PI * 2,
+        speed: 0.8 + rng() * 0.4,
       });
     }
     return arr;
@@ -291,33 +294,26 @@ export default function GlassShatterLoader({
     return geom;
   }, []);
 
-  // 3. Shard geometries for Glass Shatter
-  const shardMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: glassVertexShader,
-      fragmentShader: glassFragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uShatterStart: { value: 0.0 },
-        uImpactZ: { value: GLASS_Z },
-        uGlassOpacity: { value: 0.0 },
-      },
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: true,
-    });
-  }, []);
+  // 3. Shard uniforms for Glass Shatter
+  const shardUniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uShatterStart: { value: 0.0 },
+    uImpactZ: { value: GLASS_Z },
+    uGlassOpacity: { value: 0.0 },
+  }), []);
 
   const glassShards = useMemo(() => {
+    const rng = createPRNG(303);
     const width = 7.5;
     const height = 5.2;
     const cols = 4;
     const rows = 5;
     const thickness = 0.05;
 
-    const grid: THREE.Vector2[][] = [];
     const cellW = width / cols;
     const cellH = height / rows;
+
+    const grid: THREE.Vector2[][] = [];
 
     for (let c = 0; c <= cols; c++) {
       grid[c] = [];
@@ -332,8 +328,8 @@ export default function GlassShatterLoader({
           const distToImpact = Math.sqrt(x*x + y*y);
           const impactInfluence = Math.exp(-distToImpact * 0.8);
           const jitterScale = 0.42 * (1.0 - 0.5 * impactInfluence);
-          px += (Math.random() - 0.5) * cellW * jitterScale;
-          py += (Math.random() - 0.5) * cellH * jitterScale;
+          px += (rng() - 0.5) * cellW * jitterScale;
+          py += (rng() - 0.5) * cellH * jitterScale;
         }
         grid[c].push(new THREE.Vector2(px, py));
       }
@@ -410,17 +406,17 @@ export default function GlassShatterLoader({
           ).normalize();
 
           // Outward scatter speed (higher near center)
-          const speed = (2.2 + Math.random() * 2.8) * Math.exp(-distFromImpact * 0.35);
+          const speed = (2.2 + rng() * 2.8) * Math.exp(-distFromImpact * 0.35);
           const vel = new THREE.Vector3(
             blastDir.x * speed,
             blastDir.y * speed,
-            4.0 + Math.random() * 3.5 // fly towards camera
+            4.0 + rng() * 3.5 // fly towards camera
           );
 
           const rotVel = new THREE.Vector3(
-            (Math.random() - 0.5) * 6.5,
-            (Math.random() - 0.5) * 6.5,
-            (Math.random() - 0.5) * 6.5
+            (rng() - 0.5) * 6.5,
+            (rng() - 0.5) * 6.5,
+            (rng() - 0.5) * 6.5
           );
 
           shardsArray.push({
@@ -443,11 +439,14 @@ export default function GlassShatterLoader({
 
   // Frame simulation loop
   useFrame((state, delta) => {
+    const tempV = new THREE.Vector3();
     const dt = Math.min(delta, 0.1);
     const time = state.clock.getElapsedTime();
 
     // Pass time to shard shader
-    shardMaterial.uniforms.uTime.value = time;
+    if (shardMaterialRef.current) {
+      shardMaterialRef.current.uniforms.uTime.value = time;
+    }
 
     // 1. Act 1: Stitching Mode
     if (loaderState === "loading") {
@@ -459,7 +458,9 @@ export default function GlassShatterLoader({
       soundEngine.updateHumProgress(progress);
 
       const ratio = progress / 100;
-      threadMaterial.uniforms.uProgress.value = ratio;
+      if (threadMaterialRef.current) {
+        threadMaterialRef.current.uniforms.uProgress.value = ratio;
+      }
 
       // Update stitching particle positions
       const posAttr = particleGeometry.getAttribute("position") as THREE.BufferAttribute;
@@ -493,8 +494,8 @@ export default function GlassShatterLoader({
 
       // Fade in the glass pane and border frame during final loader phase (ratio > 0.60, ~0.8s)
       const glassPane = glassPaneRef.current;
-      if (glassPane) {
-        shardMaterial.uniforms.uGlassOpacity.value = Math.max(0, ratio - 0.6) * 2.5;
+      if (glassPane && shardMaterialRef.current) {
+        shardMaterialRef.current.uniforms.uGlassOpacity.value = Math.max(0, ratio - 0.6) * 2.5;
       }
 
       const frameBorder = frameRef.current;
@@ -507,15 +508,17 @@ export default function GlassShatterLoader({
 
       // Pulse camera slightly during load for atmosphere (skip if reducedMotion)
       if (!reducedMotion) {
-        camera.position.z = 5.0 + Math.sin(time * 0.8) * 0.05;
+        state.camera.position.z = 5.0 + Math.sin(time * 0.8) * 0.05;
       } else {
-        camera.position.z = 5.0;
+        state.camera.position.z = 5.0;
       }
     }
 
     // 2. Act 2: Ball launches forward
     if (loaderState === "impact") {
-      shardMaterial.uniforms.uGlassOpacity.value = 1.0; // fully visible before impact
+      if (shardMaterialRef.current) {
+        shardMaterialRef.current.uniforms.uGlassOpacity.value = 1.0; // fully visible before impact
+      }
 
       // Stop the loader hum cleanly before launch impact
       if (humStarted.current) {
@@ -523,11 +526,10 @@ export default function GlassShatterLoader({
         humStarted.current = false;
       }
 
-      const clock = state.clock as any;
-      if (clock.impactStart === undefined) {
-        clock.impactStart = time;
+      if (impactStartTime.current === null) {
+        impactStartTime.current = time;
       }
-      const elapsed = time - clock.impactStart;
+      const elapsed = time - impactStartTime.current;
       const duration = 0.82; // ~0.8s launch time
 
       const launchBall = launchingBallRef.current;
@@ -543,13 +545,16 @@ export default function GlassShatterLoader({
           
           // Camera pulls back (skip if reducedMotion)
           if (!reducedMotion) {
-            camera.position.z = 5.0 + (t * 0.4);
+            state.camera.position.z = 5.0 + (t * 0.4);
           }
         } else {
-          // Impact collision triggers!
+          // Impact Moment Trigger
           launchBall.position.set(0, 0, GLASS_Z);
           setCollisionTriggered(true);
+          soundEngine.playImpact();
+          soundEngine.playChime();
           setLoaderState("shattering");
+          shatterTimeStart.current = time;
         }
       }
     }
@@ -558,8 +563,10 @@ export default function GlassShatterLoader({
     if (loaderState === "shattering") {
       if (shatterTimeStart.current === 0.0) {
         shatterTimeStart.current = time;
-        shardMaterial.uniforms.uShatterStart.value = time;
-        shardMaterial.uniforms.uGlassOpacity.value = 1.0;
+        if (shardMaterialRef.current) {
+          shardMaterialRef.current.uniforms.uShatterStart.value = time;
+          shardMaterialRef.current.uniforms.uGlassOpacity.value = 1.0;
+        }
         // Trigger glass crack sound
         soundEngine.playImpact();
       }
@@ -609,7 +616,9 @@ export default function GlassShatterLoader({
         });
 
         // Fade out the shards near the end of reassembly
-        shardMaterial.uniforms.uGlassOpacity.value = 1.0 - smoothstep(0.6, 1.0, easeProg);
+        if (shardMaterialRef.current) {
+          shardMaterialRef.current.uniforms.uGlassOpacity.value = 1.0 - smoothstep(0.6, 1.0, easeProg);
+        }
       } else {
         // Act 3a: Outward Shatter physics
         const airResistance = reducedMotion ? 1.5 : 0.35;
@@ -631,20 +640,22 @@ export default function GlassShatterLoader({
           mesh.rotation.copy(shard.rot);
         });
 
-        shardMaterial.uniforms.uGlassOpacity.value = 1.0;
+        if (shardMaterialRef.current) {
+          shardMaterialRef.current.uniforms.uGlassOpacity.value = 1.0;
+        }
       }
 
       // Camera motion: continuous orbit pan that eases flat on reassembly
       if (reducedMotion) {
-        camera.position.set(0, 0, 5.0);
-        camera.lookAt(0, 0, 0);
+        state.camera.position.set(0, 0, 5.0);
+        state.camera.lookAt(0, 0, 0);
       } else {
         const orbitSpeed = 0.45;
         const fadeCam = 1.0 - smoothstep(reassemblyStart, reassemblyEnd, elapsedShatter);
         const angle = Math.sin(elapsedShatter * orbitSpeed) * 0.15 * fadeCam;
-        camera.position.x = Math.sin(angle) * 5.4;
-        camera.position.z = Math.cos(angle) * 5.4;
-        camera.lookAt(0, 0, 0);
+        state.camera.position.x = Math.sin(angle) * 5.4;
+        state.camera.position.z = Math.cos(angle) * 5.4;
+        state.camera.lookAt(0, 0, 0);
       }
 
       // Settle and scale down launching ball as it merges into the center
@@ -665,16 +676,11 @@ export default function GlassShatterLoader({
       if (elapsedShatter >= 2.4) {
         setLoaderState("completed");
         // Reset camera positions to default
-        camera.position.set(0, 0, 5.0);
-        camera.lookAt(0, 0, 0);
+        state.camera.position.set(0, 0, 5.0);
+        state.camera.lookAt(0, 0, 0);
       }
     }
   });
-
-  const smoothstep = (min: number, max: number, value: number) => {
-    const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
-    return x * x * (3 - 2 * x);
-  };
 
   return (
     <group ref={groupRef}>
@@ -682,7 +688,16 @@ export default function GlassShatterLoader({
       {loaderState === "loading" && (
         <group>
           {/* Geodesic Stitching Wires */}
-          <lineSegments geometry={threadGeometry} material={threadMaterial} />
+          <lineSegments geometry={threadGeometry}>
+            <shaderMaterial
+              ref={threadMaterialRef}
+              vertexShader={threadVertexShader}
+              fragmentShader={threadFragmentShader}
+              uniforms={threadUniforms}
+              transparent
+              depthWrite
+            />
+          </lineSegments>
 
           {/* Stitching Particle Dust cloud */}
           <points geometry={particleGeometry}>
@@ -741,8 +756,17 @@ export default function GlassShatterLoader({
       {loaderState !== "shattering" && loaderState !== "completed" && (
         <group position={[0, 0, GLASS_Z]}>
           {/* Glass Pane with High Specular and Refraction Sheen */}
-          <mesh ref={glassPaneRef} material={shardMaterial}>
+          <mesh ref={glassPaneRef}>
             <planeGeometry args={[7.5, 5.2]} />
+            <shaderMaterial
+              ref={shardMaterialRef}
+              vertexShader={glassVertexShader}
+              fragmentShader={glassFragmentShader}
+              uniforms={shardUniforms}
+              transparent
+              side={THREE.DoubleSide}
+              depthWrite
+            />
           </mesh>
           {/* Glowing Border Frame Line segments */}
           <lineSegments ref={frameRef} position={[0, 0, 0.01]}>
@@ -769,8 +793,16 @@ export default function GlassShatterLoader({
               }}
               geometry={shard.geometry}
               position={shard.initialPos}
-              material={shardMaterial}
-            />
+            >
+              <shaderMaterial
+                vertexShader={glassVertexShader}
+                fragmentShader={glassFragmentShader}
+                uniforms={shardUniforms}
+                transparent
+                side={THREE.DoubleSide}
+                depthWrite
+              />
+            </mesh>
           ))}
         </group>
       )}
