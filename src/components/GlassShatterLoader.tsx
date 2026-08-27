@@ -170,6 +170,33 @@ export default function GlassShatterLoader({
   const threadMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const shardMaterialRef = useRef<THREE.ShaderMaterial>(null);
 
+  useEffect(() => {
+    threadMaterialRef.current = new THREE.ShaderMaterial({
+      vertexShader: threadVertexShader,
+      fragmentShader: threadFragmentShader,
+      uniforms: {
+        uProgress: { value: 0 },
+        uColor: { value: new THREE.Color("#00aaff") },
+      },
+      transparent: true,
+      depthWrite: true,
+    });
+
+    shardMaterialRef.current = new THREE.ShaderMaterial({
+      vertexShader: glassVertexShader,
+      fragmentShader: glassFragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uShatterStart: { value: 0.0 },
+        uImpactZ: { value: GLASS_Z },
+        uGlassOpacity: { value: 0.0 },
+      },
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: true,
+    });
+  }, []);
+
   // Radial crack wireframe geometry generated mathematically on impact
   const crackLinesGeometry = useMemo(() => {
     const rng = createPRNG(101);
@@ -249,12 +276,6 @@ export default function GlassShatterLoader({
     return geom;
   }, []);
 
-  // Thread uniforms
-  const threadUniforms = useMemo(() => ({
-    uProgress: { value: 0 },
-    uColor: { value: new THREE.Color("#00aaff") },
-  }), []);
-
   // 2. Stitching Particle System
   const particleCount = 180;
   const particlesData = useMemo(() => {
@@ -293,14 +314,6 @@ export default function GlassShatterLoader({
     geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return geom;
   }, []);
-
-  // 3. Shard uniforms for Glass Shatter
-  const shardUniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uShatterStart: { value: 0.0 },
-    uImpactZ: { value: GLASS_Z },
-    uGlassOpacity: { value: 0.0 },
-  }), []);
 
   const glassShards = useMemo(() => {
     const rng = createPRNG(303);
@@ -563,12 +576,10 @@ export default function GlassShatterLoader({
     if (loaderState === "shattering") {
       if (shatterTimeStart.current === 0.0) {
         shatterTimeStart.current = time;
-        if (shardMaterialRef.current) {
-          shardMaterialRef.current.uniforms.uShatterStart.value = time;
-          shardMaterialRef.current.uniforms.uGlassOpacity.value = 1.0;
-        }
-        // Trigger glass crack sound
-        soundEngine.playImpact();
+      }
+      if (shardMaterialRef.current) {
+        shardMaterialRef.current.uniforms.uShatterStart.value = time;
+        shardMaterialRef.current.uniforms.uGlassOpacity.value = 1.0;
       }
 
       const elapsedShatter = time - shatterTimeStart.current;
@@ -688,16 +699,12 @@ export default function GlassShatterLoader({
       {loaderState === "loading" && (
         <group>
           {/* Geodesic Stitching Wires */}
-          <lineSegments geometry={threadGeometry}>
-            <shaderMaterial
-              ref={threadMaterialRef}
-              vertexShader={threadVertexShader}
-              fragmentShader={threadFragmentShader}
-              uniforms={threadUniforms}
-              transparent
-              depthWrite
-            />
-          </lineSegments>
+          <lineSegments
+            geometry={threadGeometry}
+            ref={(el) => {
+              if (el && threadMaterialRef.current) el.material = threadMaterialRef.current;
+            }}
+          />
 
           {/* Stitching Particle Dust cloud */}
           <points geometry={particleGeometry}>
@@ -756,17 +763,13 @@ export default function GlassShatterLoader({
       {loaderState !== "shattering" && loaderState !== "completed" && (
         <group position={[0, 0, GLASS_Z]}>
           {/* Glass Pane with High Specular and Refraction Sheen */}
-          <mesh ref={glassPaneRef}>
+          <mesh
+            ref={(el) => {
+              glassPaneRef.current = el;
+              if (el && shardMaterialRef.current) el.material = shardMaterialRef.current;
+            }}
+          >
             <planeGeometry args={[7.5, 5.2]} />
-            <shaderMaterial
-              ref={shardMaterialRef}
-              vertexShader={glassVertexShader}
-              fragmentShader={glassFragmentShader}
-              uniforms={shardUniforms}
-              transparent
-              side={THREE.DoubleSide}
-              depthWrite
-            />
           </mesh>
           {/* Glowing Border Frame Line segments */}
           <lineSegments ref={frameRef} position={[0, 0, 0.01]}>
@@ -790,19 +793,11 @@ export default function GlassShatterLoader({
               key={i}
               ref={(el) => {
                 shardMeshes.current[i] = el;
+                if (el && shardMaterialRef.current) el.material = shardMaterialRef.current;
               }}
               geometry={shard.geometry}
               position={shard.initialPos}
-            >
-              <shaderMaterial
-                vertexShader={glassVertexShader}
-                fragmentShader={glassFragmentShader}
-                uniforms={shardUniforms}
-                transparent
-                side={THREE.DoubleSide}
-                depthWrite
-              />
-            </mesh>
+            />
           ))}
         </group>
       )}

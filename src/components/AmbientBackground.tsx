@@ -47,34 +47,34 @@ const backgroundFragmentShader = `
 
     if (uTransition <= 1.0) {
       float t = uTransition;
-      baseSpaceBg = mix(vec3(0.01, 0.01, 0.022), vec3(0.015, 0.015, 0.035), t);
-      pinkStrength = mix(0.18, 0.38, t);
-      blueStrength = mix(0.48, 0.68, t);
+      baseSpaceBg = mix(vec3(0.015, 0.018, 0.038), vec3(0.020, 0.022, 0.048), t);
+      pinkStrength = mix(0.35, 0.55, t);
+      blueStrength = mix(0.65, 0.85, t);
       speedScale = mix(0.5, 1.3, t);
       noiseScale = mix(1.3, 2.3, t);
     } else if (uTransition <= 2.0) {
       float t = uTransition - 1.0;
-      baseSpaceBg = mix(vec3(0.015, 0.015, 0.035), vec3(0.012, 0.01, 0.028), t);
-      pinkStrength = mix(0.38, 0.58, t);
-      blueStrength = mix(0.68, 0.28, t);
+      baseSpaceBg = mix(vec3(0.020, 0.022, 0.048), vec3(0.025, 0.018, 0.042), t);
+      pinkStrength = mix(0.55, 0.70, t);
+      blueStrength = mix(0.85, 0.45, t);
       speedScale = mix(1.3, 0.8, t);
       noiseScale = mix(2.3, 1.7, t);
-      sparkleStrength = mix(0.0, 1.2, t);
+      sparkleStrength = mix(0.0, 1.4, t);
     } else if (uTransition <= 3.0) {
       float t = uTransition - 2.0;
-      baseSpaceBg = mix(vec3(0.012, 0.01, 0.028), vec3(0.005, 0.005, 0.012), t);
-      pinkStrength = mix(0.58, 0.08, t);
-      blueStrength = mix(0.28, 0.12, t);
-      speedScale = mix(0.8, 0.35, t);
-      noiseScale = mix(1.7, 0.9, t);
-      sparkleStrength = mix(1.2, 0.0, t);
+      baseSpaceBg = mix(vec3(0.025, 0.018, 0.042), vec3(0.018, 0.014, 0.028), t);
+      pinkStrength = mix(0.70, 0.35, t);
+      blueStrength = mix(0.45, 0.30, t);
+      speedScale = mix(0.8, 0.45, t);
+      noiseScale = mix(1.7, 1.1, t);
+      sparkleStrength = mix(1.4, 0.0, t);
     } else {
       float t = clamp(uTransition - 3.0, 0.0, 1.0);
-      baseSpaceBg = mix(vec3(0.005, 0.005, 0.012), vec3(0.038, 0.03, 0.068), t);
-      pinkStrength = mix(0.08, 0.88, t);
-      blueStrength = mix(0.12, 0.98, t);
-      speedScale = mix(0.35, 0.2, t);
-      noiseScale = mix(0.9, 0.7, t);
+      baseSpaceBg = mix(vec3(0.018, 0.014, 0.028), vec3(0.045, 0.035, 0.075), t);
+      pinkStrength = mix(0.35, 0.95, t);
+      blueStrength = mix(0.30, 0.98, t);
+      speedScale = mix(0.45, 0.25, t);
+      noiseScale = mix(1.1, 0.7, t);
     }
 
     // Drifting coordinates for soft aurora bands
@@ -90,9 +90,9 @@ const backgroundFragmentShader = `
     float band2 = cos(uv.x * 1.2 - uv.y * 1.8 - slowTime) * 0.5 + 0.5;
     band2 *= noise2d(p2);
 
-    // Ambient radial falloff to keep edges dark and vignette-like
+    // Ambient radial falloff with non-zero baseline floor to prevent dead black edges
     float dist = distance(uv, vec2(0.5, 0.5));
-    float falloff = clamp(1.0 - dist * 1.4, 0.0, 1.0);
+    float falloff = clamp(1.0 - dist * 0.85, 0.25, 1.0);
     
     // Base glow colors matching established pink-blue range
     vec3 pinkGlow = vec3(0.85, 0.35, 0.55) * pinkStrength * band1 * falloff;
@@ -171,7 +171,7 @@ export default function AmbientBackground({ scrollProgress = 0 }: AmbientBackgro
   });
 
   return (
-    <mesh position={[0, 0, -8]} scale={[25, 25, 1]}>
+    <mesh position={[0, 0, -15]} scale={[120, 120, 1]}>
       <planeGeometry />
       <shaderMaterial
         ref={materialRef}
