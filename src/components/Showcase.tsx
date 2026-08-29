@@ -286,9 +286,8 @@ export default function Showcase() {
 
       {/* 2D HTML UI Overlay */}
       <div className="ui-overlay">
-        {/* Top Header */}
-        {loaderState === "completed" && (
-          <header className="header fade-in-element">
+        {/* Top Header - Always visible with persistent branding */}
+        <header className="header">
           <div className="logo-container">
             <svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="logo-icon-svg">
               <defs>
@@ -335,9 +334,11 @@ export default function Showcase() {
             </div>
           </div>
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-            <div className="instructions">
-              <span>DRAG OR SWIPE</span>
-            </div>
+            {loaderState === "completed" && (
+              <div className="instructions">
+                <span>DRAG OR SWIPE</span>
+              </div>
+            )}
             <button 
               className="audio-mute-btn" 
               onClick={toggleMute}
@@ -347,14 +348,46 @@ export default function Showcase() {
               <span>SOUND: {isMuted ? "OFF" : "ON"}</span>
             </button>
           </div>
-          </header>
-        )}
+        </header>
 
         {/* Loading Overlay Center text */}
         {isLoading && (
           <div className="center-instructions loading-instructions">
-            <div className="loading-indicator-content" style={{ textAlign: "center" }}>
-              {/* Single serif accent title reserved for loading page */}
+            <div className="loading-indicator-content" style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {/* Glowing Crystalline Polyhedron Brand Icon */}
+              <div style={{ marginBottom: "1.2rem", filter: "drop-shadow(0 0 16px rgba(0, 229, 255, 0.6))" }}>
+                <svg width="48" height="48" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="loadPolyPinkWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#f472b6" />
+                      <stop offset="50%" stopColor="#f8fafc" />
+                      <stop offset="100%" stopColor="#38bdf8" />
+                    </linearGradient>
+                    <linearGradient id="loadPolyBlueCyan" x1="100%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#00c6ff" />
+                      <stop offset="100%" stopColor="#ff0844" />
+                    </linearGradient>
+                    <linearGradient id="loadPolyFacetDark" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#0284c7" stopOpacity="0.85" />
+                      <stop offset="100%" stopColor="#ec4899" stopOpacity="0.9" />
+                    </linearGradient>
+                    <linearGradient id="loadPolyFacetLight" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+                      <stop offset="100%" stopColor="#7dd3fc" stopOpacity="0.7" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M20 3 L35 11 L35 29 L20 37 L5 29 L5 11 Z" fill="rgba(15, 23, 42, 0.6)" stroke="url(#loadPolyPinkWhite)" strokeWidth="1.6" />
+                  <polygon points="20,3 35,11 20,16 5,11" fill="url(#loadPolyFacetLight)" opacity="0.65" />
+                  <polygon points="35,11 35,29 20,20 20,16" fill="url(#loadPolyPinkWhite)" opacity="0.8" />
+                  <polygon points="35,29 20,37 20,20" fill="url(#loadPolyFacetDark)" opacity="0.85" />
+                  <polygon points="20,37 5,29 20,20" fill="url(#loadPolyBlueCyan)" opacity="0.75" />
+                  <polygon points="5,11 20,3 20,16 5,29" fill="url(#loadPolyFacetLight)" opacity="0.5" />
+                  <polygon points="20,10 28,20 20,30 12,20" fill="url(#loadPolyPinkWhite)" opacity="0.9" stroke="#ffffff" strokeWidth="0.8" />
+                  <polyline points="20,3 20,37" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="1" strokeDasharray="2 2" />
+                  <polyline points="5,11 35,29" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="0.8" />
+                  <polyline points="35,11 5,29" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="0.8" />
+                </svg>
+              </div>
               <h1 
                 className="serif-accent" 
                 style={{ 

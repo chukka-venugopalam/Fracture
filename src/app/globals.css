@@ -84,11 +84,11 @@ main {
 }
 
 .ui-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   z-index: 2;
   pointer-events: none;
   display: flex;
@@ -369,42 +369,27 @@ main {
 
 /* --- State Transitions for Overlays --- */
 
-.state-loading .fade-in-element {
+.header {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+.state-loading .loading-instructions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.state-impact .loading-instructions,
+.state-shattering .loading-instructions {
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.4s ease;
 }
 
-.state-impact .loading-indicator-overlay {
-  opacity: 0;
-}
-
-.state-impact .fade-in-element {
-  opacity: 0;
-}
-
-.state-shattering .loading-indicator-overlay {
-  opacity: 0;
-}
-
-.state-shattering .fade-in-element {
-  opacity: 0;
-}
-
-.state-completed .loading-indicator-overlay {
+.state-completed .loading-instructions {
   display: none;
   opacity: 0;
-}
-
-.state-completed.study-active .fade-in-element {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(12px);
-}
-
-.state-completed:not(.study-active) .fade-in-element {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
 }
 
 /* --- Serif Accent Typography --- */
