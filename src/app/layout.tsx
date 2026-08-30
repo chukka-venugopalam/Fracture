@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
-import "./globals.css";
-
-import { Cormorant_Garamond } from "next/font/google";
+import { Outfit, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -21,6 +18,13 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Fracture — Cinematic Orbit Navigation",
   description: "A gorgeous 3D intro that shatters into an orbiting portal navigation system, built with React Three Fiber and Custom GLSL Shaders.",
+  icons: {
+    icon: [
+      { url: "/fracture-logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/fracture-logo.svg",
+    apple: "/fracture-logo.svg",
+  },
 };
 
 export default function RootLayout({
