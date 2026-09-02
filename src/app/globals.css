@@ -130,7 +130,7 @@ main {
 
 .logo-container:hover .logo-icon-svg {
   transform: rotate(30deg) scale(1.08);
-  filter: drop-shadow(0 0 16px rgba(255, 8, 68, 0.7));
+  filter: drop-shadow(0 0 16px rgba(0, 242, 254, 0.75));
 }
 
 .logo-text-group {

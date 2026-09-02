@@ -298,11 +298,11 @@ export default function Showcase() {
                 </linearGradient>
                 <linearGradient id="polyBlueCyan" x1="100%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#00c6ff" />
-                  <stop offset="100%" stopColor="#ff0844" />
+                  <stop offset="100%" stopColor="#f472b6" />
                 </linearGradient>
                 <linearGradient id="polyFacetDark" x1="0%" y1="100%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#0284c7" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#ec4899" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.9" />
                 </linearGradient>
                 <linearGradient id="polyFacetLight" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
@@ -330,7 +330,7 @@ export default function Showcase() {
             </svg>
             <div className="logo-text-group">
               <span className="logo-main">FRACTURE</span>
-              <span className="logo-sub">CINEMATIC ORBIT NAVIGATION</span>
+              <span className="logo-sub">CINEMATIC MATERIAL JOURNEY</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
@@ -365,11 +365,11 @@ export default function Showcase() {
                     </linearGradient>
                     <linearGradient id="loadPolyBlueCyan" x1="100%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" stopColor="#00c6ff" />
-                      <stop offset="100%" stopColor="#ff0844" />
+                      <stop offset="100%" stopColor="#f472b6" />
                     </linearGradient>
                     <linearGradient id="loadPolyFacetDark" x1="0%" y1="100%" x2="100%" y2="0%">
                       <stop offset="0%" stopColor="#0284c7" stopOpacity="0.85" />
-                      <stop offset="100%" stopColor="#ec4899" stopOpacity="0.9" />
+                      <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.9" />
                     </linearGradient>
                     <linearGradient id="loadPolyFacetLight" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />

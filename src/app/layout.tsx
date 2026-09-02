@@ -16,15 +16,9 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Fracture — Cinematic Orbit Navigation",
-  description: "A gorgeous 3D intro that shatters into an orbiting portal navigation system, built with React Three Fiber and Custom GLSL Shaders.",
-  icons: {
-    icon: [
-      { url: "/fracture-logo.svg", type: "image/svg+xml" },
-    ],
-    shortcut: "/fracture-logo.svg",
-    apple: "/fracture-logo.svg",
-  },
+  title: "Fracture — Cinematic Material Journey",
+  description:
+    "A cinematic 3D experience where a single shattered crystal core transforms through five material states — glass, metal, crystal, obsidian, and light — as you scroll. Built with React Three Fiber and custom GLSL shaders.",
 };
 
 export default function RootLayout({
